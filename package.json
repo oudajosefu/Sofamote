@@ -13,6 +13,9 @@
     "build": "npm run build -w client && cargo build --release --manifest-path server/Cargo.toml",
     "start": "npm run build && cargo run --release --manifest-path server/Cargo.toml",
     "dev:server": "cargo run --manifest-path server/Cargo.toml",
-    "dev:client": "npm run dev -w client"
+    "dev:client": "npm run dev -w client",
+    "package:win": "npm run build -w client && cargo wix --manifest-path server/Cargo.toml --nocapture",
+    "package:mac": "npm run build -w client && cargo bundle --release --manifest-path server/Cargo.toml",
+    "package:linux": "npm run build -w client && cargo deb --manifest-path server/Cargo.toml"
   }
 }

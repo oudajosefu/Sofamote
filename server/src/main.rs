@@ -40,16 +40,13 @@ fn main() {
     // Shutdown signal
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
 
-    // Resolve client/dist relative to the binary (works for both dev and release)
-    let client_dir = resolve_client_dir();
-
     // Start tokio runtime on a background thread
     let state_bg = Arc::clone(&app_state);
     let pairing_url_bg = pairing_url.clone();
     let server_thread = std::thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
         rt.block_on(async move {
-            run_server(state_bg, tray_rx, client_dir, pairing_url_bg, shutdown_rx).await;
+            run_server(state_bg, tray_rx, pairing_url_bg, shutdown_rx).await;
         });
     });
 
@@ -116,7 +113,6 @@ fn main() {
 async fn run_server(
     state: Arc<AppState>,
     mut tray_rx: tokio::sync::mpsc::UnboundedReceiver<TrayCmd>,
-    client_dir: std::path::PathBuf,
     pairing_url: String,
     shutdown_rx: tokio::sync::oneshot::Receiver<()>,
 ) {
@@ -134,7 +130,7 @@ async fn run_server(
         }
     });
 
-    let router = http::build_router(state, client_dir, pairing_url.clone());
+    let router = http::build_router(state, pairing_url.clone());
     let listener = match tokio::net::TcpListener::bind(format!("0.0.0.0:{PORT}")).await {
         Ok(l) => l,
         Err(e) => {
@@ -153,20 +149,6 @@ async fn run_server(
             tracing::info!("shutting down");
         }
     }
-}
-
-fn resolve_client_dir() -> std::path::PathBuf {
-    // When running via `cargo run`, the exe is in target/{debug,release}/
-    // and client/dist is two levels up then into client/dist.
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(dir) = exe.parent() {
-            let candidate = dir.join("../../client/dist");
-            if candidate.exists() {
-                return candidate.canonicalize().unwrap_or(candidate);
-            }
-        }
-    }
-    std::path::PathBuf::from("client/dist")
 }
 
 // On Windows: run a proper Win32 message pump so tray-icon's hidden HWND receives

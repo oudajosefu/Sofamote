@@ -23,13 +23,13 @@ pub async fn ws_handler(
     let ws = match ws {
         Some(w) => w,
         None => {
-            return match tokio::fs::read(&rs.index_html).await {
-                Ok(bytes) => (
+            return match crate::http::get_index_html() {
+                Some(bytes) => (
                     [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
                     bytes,
                 )
                     .into_response(),
-                Err(_) => StatusCode::NOT_FOUND.into_response(),
+                None => StatusCode::NOT_FOUND.into_response(),
             };
         }
     };

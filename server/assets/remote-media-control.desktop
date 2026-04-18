@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Remote Media Control
+Exec=/usr/bin/remote-media-control
+Icon=remote-media-control
+Categories=Utility;
+StartupNotify=false
+Comment=Phone remote for laptop media

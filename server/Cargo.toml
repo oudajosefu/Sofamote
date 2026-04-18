@@ -2,6 +2,9 @@
 name = "remote-media-control"
 version = "0.1.0"
 edition = "2021"
+authors = ["Joseph Odeh <odeh.joseph@gmail.com>"]
+description = "Phone remote for laptop media"
+license = "MIT"
 
 [[bin]]
 name = "remote-media-control"
@@ -10,7 +13,7 @@ path = "src/main.rs"
 [dependencies]
 tokio        = { version = "1",    features = ["full"] }
 axum         = { version = "0.7",  features = ["ws"] }
-tower-http   = { version = "0.5",  features = ["fs"] }
+tower-http   = { version = "0.5" }
 serde        = { version = "1",    features = ["derive"] }
 serde_json   = "1"
 enigo        = "0.2"
@@ -26,6 +29,8 @@ subtle       = "2"
 open         = "5"
 tracing      = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rust-embed   = { version = "8", features = ["interpolate-folder-path"] }
+mime_guess   = "2"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
@@ -33,3 +38,22 @@ windows-sys = { version = "0.52", features = ["Win32_UI_WindowsAndMessaging"] }
 
 [build-dependencies]
 png = "0.17"
+
+[package.metadata.bundle]
+name = "Remote Media Control"
+identifier = "com.remote-media-control"
+icon = ["assets/icon-active.png"]
+category = "public.app-category.utilities"
+short_description = "Phone remote for laptop media"
+osx_minimum_system_version = "12.0"
+osx_info_plist_additional = { "LSUIElement" = "1" }
+
+[package.metadata.deb]
+name = "remote-media-control"
+maintainer = "Joseph Odeh <odeh.joseph@gmail.com>"
+depends = "$auto"
+section = "utils"
+assets = [
+  ["target/release/remote-media-control", "usr/bin/", "755"],
+  ["assets/remote-media-control.desktop", "usr/share/applications/", "644"],
+]
