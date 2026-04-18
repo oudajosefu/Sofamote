@@ -51,6 +51,22 @@ tray menu afterward. Scan the QR with your phone — the URL looks like
 `http://192.168.x.y:7337/?t=<token>`. The phone loads the PWA, stores
 the token, and can be added to your home screen for one-tap access.
 
+## Release packaging
+
+The repo is licensed under the MIT License. The root [LICENSE](LICENSE)
+file is the canonical license text, and the Windows MSI displays those
+same MIT terms during installation instead of placeholder copy.
+
+When GitHub Actions release credentials are configured, Windows release
+builds sign both `sofamote.exe` and the generated MSI. That improves the
+publisher/trust experience, but brand-new releases can still need time
+to build Microsoft SmartScreen reputation.
+
+When Apple release credentials are configured, the macOS DMG is built
+from a signed app bundle, notarized with Apple, and stapled before
+upload. That notarized DMG is expected to avoid Gatekeeper's
+"unidentified developer" warning for downloaded releases.
+
 ## System tray
 
 The server lives as a tray icon so it can run quietly in the background.

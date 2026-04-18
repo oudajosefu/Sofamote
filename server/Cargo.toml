@@ -5,6 +5,8 @@ edition = "2021"
 authors = ["Joseph Odeh <odeh.joseph@gmail.com>"]
 description = "Phone remote for laptop media"
 license = "MIT"
+homepage = "https://github.com/oudajosefu/remote-media-control"
+repository = "https://github.com/oudajosefu/remote-media-control"
 
 [[bin]]
 name = "sofamote"
@@ -47,14 +49,23 @@ name = "Sofamote"
 identifier = "com.sofamote"
 icon = ["assets/icon-active.png"]
 category = "public.app-category.utilities"
+copyright = "Copyright (c) 2026 Joseph Odeh"
 short_description = "Phone remote for laptop media"
+long_description = """
+Phone remote for controlling video playback on a laptop over the local network.
+Sofamote serves a phone-friendly PWA and translates taps into OS-level media
+keystrokes for the focused browser window.
+"""
 osx_minimum_system_version = "12.0"
 osx_info_plist_additional = { "LSUIElement" = "1" }
 
 [package.metadata.deb]
 name = "sofamote"
 maintainer = "Joseph Odeh <odeh.joseph@gmail.com>"
+copyright = "2026, Joseph Odeh"
 depends = "$auto"
+extended-description = """Phone remote for controlling video playback on a laptop over the local network.
+Sofamote serves a phone-friendly PWA and translates taps into OS-level media keystrokes for the focused browser window."""
 section = "utils"
 assets = [
   [

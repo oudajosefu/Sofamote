@@ -34,6 +34,9 @@
         <Property Id='DiskPrompt' Value='Sofamote Installation'/>
         <Icon Id='SofamoteIcon' SourceFile='assets\app-icon.ico'/>
         <Property Id='ARPPRODUCTICON' Value='SofamoteIcon'/>
+        <Property Id='ARPURLINFOABOUT' Value='https://github.com/oudajosefu/remote-media-control'/>
+        <Property Id='WIXUI_INSTALLDIR' Value='APPLICATIONFOLDER'/>
+        <WixVariable Id='WixUILicenseRtf' Value='wix\License.rtf'/>
 
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
@@ -91,9 +94,8 @@
         <SetProperty Id='ARPINSTALLLOCATION' Value='[APPLICATIONFOLDER]' After='CostFinalize'/>
 
         <UI>
-            <UIRef Id='WixUI_Minimal'/>
-            <Publish Dialog='WelcomeDlg' Control='Next' Event='NewDialog' Value='VerifyReadyDlg' Order='99'>1</Publish>
-            <Publish Dialog='VerifyReadyDlg' Control='Back' Event='NewDialog' Value='WelcomeDlg' Order='99'>1</Publish>
+            <UIRef Id='WixUI_InstallDir'/>
+            <UIRef Id='WixUI_ErrorProgressText'/>
         </UI>
 
     </Product>
