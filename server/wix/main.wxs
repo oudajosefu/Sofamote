@@ -32,6 +32,8 @@
 
         <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/>
         <Property Id='DiskPrompt' Value='Sofamote Installation'/>
+        <Icon Id='SofamoteIcon' SourceFile='assets\app-icon.ico'/>
+        <Property Id='ARPPRODUCTICON' Value='SofamoteIcon'/>
 
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
@@ -57,7 +59,9 @@
                             Name='Sofamote'
                             Description='Phone remote for laptop media'
                             Target='[Bin]sofamote.exe'
-                            WorkingDirectory='Bin'/>
+                            WorkingDirectory='Bin'
+                            Icon='SofamoteIcon'
+                            IconIndex='0'/>
                         <RemoveFolder Id='CleanUpShortCut' Directory='ApplicationProgramsFolder' On='uninstall'/>
                         <RegistryValue
                             Root='HKCU'

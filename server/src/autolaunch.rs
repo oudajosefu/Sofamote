@@ -5,6 +5,7 @@ pub fn set_auto_launch(enabled: bool) -> Result<(), String> {
 
 #[cfg(target_os = "windows")]
 mod platform {
+    use std::io::ErrorKind;
     use std::path::PathBuf;
     use winreg::enums::*;
     use winreg::RegKey;
@@ -19,24 +20,25 @@ mod platform {
             .map_err(|e| e.to_string())?;
 
         if enabled {
-            let vbs_path = write_vbs_wrapper(exe).map_err(|e| e.to_string())?;
-            let cmd = format!("wscript.exe \"{}\"", vbs_path.display());
+            remove_legacy_wrapper().map_err(|e| e.to_string())?;
+            let cmd = format!("\"{}\"", exe.display());
             run.set_value(APP_NAME, &cmd).map_err(|e| e.to_string())
         } else {
+            remove_legacy_wrapper().map_err(|e| e.to_string())?;
             run.delete_value(APP_NAME).or_else(|_| Ok(()))
         }
     }
 
-    fn write_vbs_wrapper(exe: &PathBuf) -> std::io::Result<PathBuf> {
-        let config_dir = dirs::config_dir().unwrap().join("sofamote");
-        std::fs::create_dir_all(&config_dir)?;
-        let vbs = config_dir.join("start.vbs");
-        let script = format!(
-            "Set sh = CreateObject(\"WScript.Shell\")\nsh.Run \"\"\"{}\"\"\", 0, False\n",
-            exe.display()
-        );
-        std::fs::write(&vbs, script)?;
-        Ok(vbs)
+    fn remove_legacy_wrapper() -> std::io::Result<()> {
+        let Some(vbs) = dirs::config_dir().map(|dir| dir.join("sofamote").join("start.vbs")) else {
+            return Ok(());
+        };
+
+        match std::fs::remove_file(vbs) {
+            Ok(()) => Ok(()),
+            Err(e) if e.kind() == ErrorKind::NotFound => Ok(()),
+            Err(e) => Err(e),
+        }
     }
 }
 

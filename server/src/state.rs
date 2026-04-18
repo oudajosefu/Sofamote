@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use tokio::sync::{RwLock, broadcast};
+use tokio::sync::{broadcast, RwLock};
 
 use crate::config::{self, PersistedConfig};
 
@@ -12,6 +12,7 @@ struct Inner {
     token: String,
     is_active: bool,
     auto_launch: bool,
+    has_shown_pairing_qr: bool,
 }
 
 pub struct AppState {
@@ -27,6 +28,7 @@ impl AppState {
                 token: cfg.token,
                 is_active: cfg.is_active,
                 auto_launch: cfg.auto_launch,
+                has_shown_pairing_qr: cfg.has_shown_pairing_qr,
             }),
             tx,
         })
@@ -50,6 +52,7 @@ impl AppState {
             token: inner.token.clone(),
             is_active: inner.is_active,
             auto_launch: inner.auto_launch,
+            has_shown_pairing_qr: inner.has_shown_pairing_qr,
         };
         drop(inner);
         config::save(&cfg);
@@ -63,6 +66,23 @@ impl AppState {
             token: inner.token.clone(),
             is_active: inner.is_active,
             auto_launch: inner.auto_launch,
+            has_shown_pairing_qr: inner.has_shown_pairing_qr,
+        };
+        drop(inner);
+        config::save(&cfg);
+    }
+
+    pub fn mark_pairing_qr_shown(&self) {
+        let mut inner = self.inner.blocking_write();
+        if inner.has_shown_pairing_qr {
+            return;
+        }
+        inner.has_shown_pairing_qr = true;
+        let cfg = PersistedConfig {
+            token: inner.token.clone(),
+            is_active: inner.is_active,
+            auto_launch: inner.auto_launch,
+            has_shown_pairing_qr: inner.has_shown_pairing_qr,
         };
         drop(inner);
         config::save(&cfg);

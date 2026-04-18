@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{Query, State, WebSocketUpgrade};
-use axum::http::{StatusCode, header};
+use axum::http::{header, StatusCode};
 use axum::response::IntoResponse;
 use subtle::ConstantTimeEq;
 use tokio::sync::broadcast;
@@ -24,11 +24,9 @@ pub async fn ws_handler(
         Some(w) => w,
         None => {
             return match crate::http::get_index_html() {
-                Some(bytes) => (
-                    [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
-                    bytes,
-                )
-                    .into_response(),
+                Some(bytes) => {
+                    ([(header::CONTENT_TYPE, "text/html; charset=utf-8")], bytes).into_response()
+                }
                 None => StatusCode::NOT_FOUND.into_response(),
             };
         }
@@ -46,13 +44,19 @@ pub async fn ws_handler(
 }
 
 async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
-    let hello = ServerMessage::Hello { version: VERSION, profiles: ALL_PROFILES };
+    let hello = ServerMessage::Hello {
+        version: VERSION,
+        profiles: ALL_PROFILES,
+    };
     if send_msg(&mut socket, &hello).await.is_err() {
         return;
     }
 
     let active = state.is_active().await;
-    if send_msg(&mut socket, &ServerMessage::State { active }).await.is_err() {
+    if send_msg(&mut socket, &ServerMessage::State { active })
+        .await
+        .is_err()
+    {
         return;
     }
 
@@ -87,32 +91,40 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
     }
 }
 
-async fn handle_command(
-    text: &str,
-    socket: &mut WebSocket,
-    state: &AppState,
-) -> Result<(), ()> {
+async fn handle_command(text: &str, socket: &mut WebSocket, state: &AppState) -> Result<(), ()> {
     let cmd: Command = match serde_json::from_str(text) {
         Ok(c) => c,
         Err(e) => {
-            let msg = ServerMessage::Error { message: format!("invalid command: {e}") };
+            let msg = ServerMessage::Error {
+                message: format!("invalid command: {e}"),
+            };
             return send_msg(socket, &msg).await;
         }
     };
 
     if !state.is_active().await {
-        return send_msg(socket, &ServerMessage::Ack { suppressed: Some(true) }).await;
+        return send_msg(
+            socket,
+            &ServerMessage::Ack {
+                suppressed: Some(true),
+            },
+        )
+        .await;
     }
 
     let result = tokio::task::spawn_blocking(move || dispatch(cmd)).await;
 
     match result {
         Ok(Ok(())) => send_msg(socket, &ServerMessage::Ack { suppressed: None }).await,
-        Ok(Err(e)) => {
-            send_msg(socket, &ServerMessage::Error { message: e }).await
-        }
+        Ok(Err(e)) => send_msg(socket, &ServerMessage::Error { message: e }).await,
         Err(_) => {
-            send_msg(socket, &ServerMessage::Error { message: "internal error".into() }).await
+            send_msg(
+                socket,
+                &ServerMessage::Error {
+                    message: "internal error".into(),
+                },
+            )
+            .await
         }
     }
 }

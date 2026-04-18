@@ -43,8 +43,11 @@ npm install
 npm start
 ```
 
-The server prints a QR code in the console **and** drops a tray icon
-into your taskbar. Scan the QR with your phone — the URL looks like
+On Windows, debug runs still print a QR code in the console. The
+installed app and direct release executable both behave like a
+background tray app instead: on the first Windows release launch,
+Sofamote opens the pairing QR in your browser once, then relies on the
+tray menu afterward. Scan the QR with your phone — the URL looks like
 `http://192.168.x.y:7337/?t=<token>`. The phone loads the PWA, stores
 the token, and can be added to your home screen for one-tap access.
 
@@ -60,11 +63,12 @@ The tray menu (right-click the icon) has:
   `suppressed` and no keystrokes are sent. This is the "arm/disarm"
   switch — use it so stray taps don't pause your movie when you're not
   trying to remote-control.
-- **Launch on startup** — toggle. On Windows, writes a hidden VBScript
-  wrapper under `%APPDATA%/sofamote/start.vbs` and
-  registers it in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
+- **Launch on startup** — toggle. On Windows, writes the installed
+  executable directly into
+  `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` so the app starts
+  hidden in the tray without a console window.
 - **Show pairing QR…** — opens `/qr.png` in your default browser so
-  you can re-pair a phone without digging up the console.
+  you can re-pair a phone after the one-time first-launch handoff.
 - **Quit** — gracefully stops the server.
 
 The PWA reflects active state: the status dot is **green** when the
@@ -121,8 +125,11 @@ will stop working.
 
 ## Verifying end-to-end
 
-1. `npm start` on the laptop. Confirm the console prints a QR, the
-   tray icon appears, and it logs `Listening on http://<LAN-IP>:7337`.
+1. On Windows, launch the installed app or `target\release\sofamote.exe`
+   and confirm no console window appears, the tray icon appears, and the
+   first release launch opens the pairing QR in the browser once. For
+   console-first debugging, run `npm run dev:server` and confirm it
+   prints the QR and logs `Listening on http://<LAN-IP>:7337`.
 2. Right-click the tray icon → **Active** to toggle forwarding on.
    The icon should show a green dot overlay.
 3. Open a streaming site on the laptop, start a video, click into the
@@ -134,8 +141,8 @@ will stop working.
    turn amber with a "paused" banner; taps should no longer move the
    video.
 7. Right-click the tray icon → check **Launch on startup**, reboot,
-   and confirm the server comes up automatically (no console window
-   on Windows — it's spawned hidden via `start.vbs`).
+   and confirm the server comes up automatically in the tray with no
+   console window on Windows.
 8. Switch profile to **YouTube** on a YouTube tab; confirm `k` is used
    instead of `space`.
 9. Close the lid. Confirm the remote still controls playback.

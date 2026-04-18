@@ -2,6 +2,10 @@ use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+fn default_has_shown_pairing_qr() -> bool {
+    true
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PersistedConfig {
     pub token: String,
@@ -9,6 +13,8 @@ pub struct PersistedConfig {
     pub is_active: bool,
     #[serde(default)]
     pub auto_launch: bool,
+    #[serde(default = "default_has_shown_pairing_qr")]
+    pub has_shown_pairing_qr: bool,
 }
 
 pub fn config_path() -> PathBuf {
@@ -33,6 +39,7 @@ pub fn load_or_create() -> PersistedConfig {
         token: generate_token(),
         is_active: false,
         auto_launch: false,
+        has_shown_pairing_qr: false,
     };
     save(&cfg);
     cfg

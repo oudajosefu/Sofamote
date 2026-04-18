@@ -1,3 +1,8 @@
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions)),
+    windows_subsystem = "windows"
+)]
+
 mod autolaunch;
 mod config;
 mod http;
@@ -9,13 +14,28 @@ mod tray;
 mod types;
 mod ws;
 
-use std::sync::Arc;
+use std::sync::{mpsc, Arc};
 use std::time::Duration;
 
 use state::{AppState, StateEvent};
 use tray::TrayCmd;
 
 const PORT: u16 = 7337;
+
+#[cfg(all(target_os = "windows", not(debug_assertions)))]
+const AUTO_OPEN_PAIRING_QR_ON_STARTUP: bool = true;
+#[cfg(not(all(target_os = "windows", not(debug_assertions))))]
+const AUTO_OPEN_PAIRING_QR_ON_STARTUP: bool = false;
+
+#[cfg(not(all(target_os = "windows", not(debug_assertions))))]
+const PRINT_PAIRING_QR: bool = true;
+#[cfg(all(target_os = "windows", not(debug_assertions)))]
+const PRINT_PAIRING_QR: bool = false;
+
+enum StartupSignal {
+    Ready,
+    Failed,
+}
 
 fn main() {
     tracing_subscriber::fmt()
@@ -29,9 +49,12 @@ fn main() {
     let lan_ip = net::get_lan_ip();
     let pairing_url = format!("http://{}:{}/?t={}", lan_ip, PORT, cfg.token);
 
-    print_qr(&pairing_url);
+    if PRINT_PAIRING_QR {
+        print_qr(&pairing_url);
+    }
 
     let app_state = AppState::new(cfg.clone());
+    let should_open_pairing_qr = AUTO_OPEN_PAIRING_QR_ON_STARTUP && !cfg.has_shown_pairing_qr;
 
     // Unbounded channel: tray main-thread → async tokio task.
     // UnboundedSender::send() is sync-safe (non-blocking).
@@ -39,6 +62,7 @@ fn main() {
 
     // Shutdown signal
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+    let (startup_tx, startup_rx) = mpsc::channel::<StartupSignal>();
 
     // Start tokio runtime on a background thread
     let state_bg = Arc::clone(&app_state);
@@ -46,7 +70,7 @@ fn main() {
     let server_thread = std::thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
         rt.block_on(async move {
-            run_server(state_bg, tray_rx, pairing_url_bg, shutdown_rx).await;
+            run_server(state_bg, tray_rx, pairing_url_bg, shutdown_rx, startup_tx).await;
         });
     });
 
@@ -61,6 +85,7 @@ fn main() {
     let mut active = cfg.is_active;
     let mut auto_launch_state = cfg.auto_launch;
     let mut state_rx = app_state.subscribe();
+    let mut pairing_qr_pending = should_open_pairing_qr;
 
     let qr_url = format!(
         "{}qr.png",
@@ -73,6 +98,21 @@ fn main() {
     // That window must receive Win32 messages via PeekMessage/DispatchMessage
     // for right-click and menu events to fire — a plain sleep loop is not enough.
     run_event_loop(|| {
+        if pairing_qr_pending {
+            match startup_rx.try_recv() {
+                Ok(StartupSignal::Ready) => {
+                    pairing_qr_pending = false;
+                    if open::that(&qr_url).is_ok() {
+                        app_state.mark_pairing_qr_shown();
+                    }
+                }
+                Ok(StartupSignal::Failed) | Err(mpsc::TryRecvError::Disconnected) => {
+                    pairing_qr_pending = false;
+                }
+                Err(mpsc::TryRecvError::Empty) => {}
+            }
+        }
+
         // Apply state broadcasts from async tasks
         while let Ok(event) = state_rx.try_recv() {
             let StateEvent::ActiveChanged(v) = event;
@@ -115,6 +155,7 @@ async fn run_server(
     mut tray_rx: tokio::sync::mpsc::UnboundedReceiver<TrayCmd>,
     pairing_url: String,
     shutdown_rx: tokio::sync::oneshot::Receiver<()>,
+    startup_tx: mpsc::Sender<StartupSignal>,
 ) {
     // Task: apply tray commands to app state
     let state_for_cmds = Arc::clone(&state);
@@ -136,11 +177,13 @@ async fn run_server(
     let listener = match tokio::net::TcpListener::bind(format!("0.0.0.0:{PORT}")).await {
         Ok(l) => l,
         Err(e) => {
+            startup_tx.send(StartupSignal::Failed).ok();
             tracing::error!("cannot bind port {PORT}: {e}");
             return;
         }
     };
 
+    startup_tx.send(StartupSignal::Ready).ok();
     tracing::info!("Listening on port {PORT}");
 
     tokio::select! {

@@ -39,6 +39,9 @@ windows-sys = { version = "0.52", features = ["Win32_UI_WindowsAndMessaging"] }
 [build-dependencies]
 png = "0.17"
 
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
+
 [package.metadata.bundle]
 name = "Sofamote"
 identifier = "com.sofamote"

@@ -1,11 +1,11 @@
 use std::io::Cursor;
 use std::sync::Arc;
 
-use axum::Router;
 use axum::extract::{FromRef, State};
-use axum::http::{HeaderMap, StatusCode, Uri, header};
+use axum::http::{header, HeaderMap, StatusCode, Uri};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
+use axum::Router;
 use image::GrayImage;
 use qrcode::QrCode;
 use rust_embed::RustEmbed;
@@ -73,10 +73,7 @@ pub fn get_index_html() -> Option<Vec<u8>> {
     ClientAssets::get("index.html").map(|f| f.data.to_vec())
 }
 
-async fn qr_handler(
-    State(_): State<Arc<AppState>>,
-    pairing_url: String,
-) -> impl IntoResponse {
+async fn qr_handler(State(_): State<Arc<AppState>>, pairing_url: String) -> impl IntoResponse {
     match generate_qr_png(&pairing_url) {
         Ok(bytes) => {
             let mut headers = HeaderMap::new();
