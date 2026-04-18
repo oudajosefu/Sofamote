@@ -29,6 +29,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
+windows-sys = { version = "0.52", features = ["Win32_UI_WindowsAndMessaging"] }
 
 [build-dependencies]
 png = "0.17"

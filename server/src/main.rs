@@ -70,16 +70,17 @@ fn main() {
         pairing_url.split('?').next().unwrap_or(&pairing_url)
     );
 
-    // Main thread event loop — drives the OS tray message pump
-    loop {
-        // Apply any state broadcasts from async tasks
+    // Main thread event loop.
+    //
+    // On Windows, tray-icon creates a hidden HWND on the calling thread.
+    // That window must receive Win32 messages via PeekMessage/DispatchMessage
+    // for right-click and menu events to fire — a plain sleep loop is not enough.
+    run_event_loop(|| {
+        // Apply state broadcasts from async tasks
         while let Ok(event) = state_rx.try_recv() {
-            match event {
-                StateEvent::ActiveChanged(v) => {
-                    active = v;
-                    tray_handle.set_active(active);
-                }
-            }
+            let StateEvent::ActiveChanged(v) = event;
+            active = v;
+            tray_handle.set_active(active);
         }
 
         // Process tray menu clicks
@@ -94,12 +95,12 @@ fn main() {
             } else if event.id == menu_ids.show_qr {
                 open::that(&qr_url).ok();
             } else if event.id == menu_ids.quit {
-                break;
+                return false; // exit loop
             }
         }
 
-        std::thread::sleep(Duration::from_millis(16));
-    }
+        true // continue
+    });
 
     // Graceful shutdown
     drop(tray_handle);
@@ -166,6 +167,43 @@ fn resolve_client_dir() -> std::path::PathBuf {
         }
     }
     std::path::PathBuf::from("client/dist")
+}
+
+// On Windows: run a proper Win32 message pump so tray-icon's hidden HWND receives
+// WM_RBUTTONUP and related messages that trigger the context menu.
+// On other platforms: a plain sleep loop is sufficient.
+#[cfg(target_os = "windows")]
+fn run_event_loop<F: FnMut() -> bool>(mut tick: F) {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        DispatchMessageW, PeekMessageW, TranslateMessage, MSG, PM_REMOVE, WM_QUIT,
+    };
+    unsafe {
+        let mut msg: MSG = std::mem::zeroed();
+        loop {
+            // Drain all pending Win32 messages so tray-icon's window can process them
+            while PeekMessageW(&mut msg, 0, 0, 0, PM_REMOVE) != 0 {
+                if msg.message == WM_QUIT {
+                    return;
+                }
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
+            }
+            if !tick() {
+                return;
+            }
+            std::thread::sleep(Duration::from_millis(16));
+        }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn run_event_loop<F: FnMut() -> bool>(mut tick: F) {
+    loop {
+        if !tick() {
+            return;
+        }
+        std::thread::sleep(Duration::from_millis(16));
+    }
 }
 
 fn print_qr(url: &str) {
