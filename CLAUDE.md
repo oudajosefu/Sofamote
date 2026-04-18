@@ -41,7 +41,7 @@ Rust binary using `tokio` + `axum`. Single-threaded tray event loop on the main 
 - **`state.rs`** — `AppState`: `Arc<RwLock<Inner>>` + `broadcast::Sender<StateEvent>`; single source of truth for `token`, `is_active`, `auto_launch`; persists on every mutation
 - **`config.rs`** — reads/writes `%APPDATA%/remote-media-control/config.json` (Windows) or `~/.config/remote-media-control/config.json` (Linux/macOS)
 - **`ws.rs`** — WebSocket upgrade handler; validates token (constant-time via `subtle`), sends hello + state on connect, dispatches `Command` objects, receives `StateEvent` broadcasts
-- **`http.rs`** — axum router: `ServeDir` for the SPA + `/qr.png` endpoint (generates QR PNG via `qrcode` + `image` crates)
+- **`http.rs`** — axum router: embedded static files via `rust-embed` for the SPA + `/qr.png` endpoint (generates QR PNG via `qrcode` + `image` crates)
 - **`profiles.rs`** — maps `ActionName` → `ActionRecipe` per site profile (GENERIC, YOUTUBE, NETFLIX); `resolve_action()` is the lookup entry point
 - **`keystrokes.rs`** — wraps `enigo`; exposes `tap(key, mods)` and `combo(keys)`; called via `spawn_blocking` since `Enigo` is not `Send`
 - **`tray.rs`** — system tray via `tray-icon` + `muda`; Active toggle, Launch on Startup, Show QR, Quit; icons embedded at compile time from `assets/`

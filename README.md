@@ -5,7 +5,7 @@ on your laptop's focused browser tab. Designed for the "laptop lid closed,
 HDMI to TV" setup: instead of opening a screen-sharing app every time you
 want to pause or seek, you pull up a PWA on your phone and tap a button.
 
-The laptop runs a tiny Node.js server on your WiFi network. The server
+The laptop runs a tiny Rust server on your WiFi network. The server
 translates taps in the phone UI into real OS-level keystrokes (space,
 arrow keys, `f`, `m`, `j`/`l`, etc.) delivered to the focused browser
 window. Because it speaks the browser's native keyboard shortcuts, it
@@ -15,7 +15,7 @@ works on every streaming site — Netflix, YouTube, Disney+, HBO, anything
 ## How it works
 
 ```
-phone PWA  ─── WebSocket on LAN ───▶  laptop (Node.js)
+phone PWA  ─── WebSocket on LAN ───▶  laptop (Rust server)
                                          │
                                          ▼
                           focused browser window ◀ keystroke
@@ -26,13 +26,14 @@ phone PWA  ─── WebSocket on LAN ───▶  laptop (Node.js)
    like `{ type: "action", name: "playPause", profile: "youtube" }`.
 3. The server maps the action through a per-site profile to a keystroke
    (e.g. YouTube play/pause is `k`, Netflix is `space`) and delivers it
-   via [`@nut-tree-fork/nut-js`](https://www.npmjs.com/package/@nut-tree-fork/nut-js).
+   via [`enigo`](https://crates.io/crates/enigo).
 
 ## Requirements
 
 - Windows laptop (target platform; should also work on macOS/Linux with
   minor tweaks).
-- Node.js 20 LTS or newer.
+- Rust toolchain (`rustup`) with `cargo` on PATH.
+- Node.js (for building the client PWA).
 - Phone on the same WiFi network.
 
 ## Install & run
@@ -61,8 +62,7 @@ The tray menu (right-click the icon) has:
   trying to remote-control.
 - **Launch on startup** — toggle. On Windows, writes a hidden VBScript
   wrapper under `%APPDATA%/remote-media-control/start.vbs` and
-  registers it in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
-  via [`auto-launch`](https://www.npmjs.com/package/auto-launch).
+  registers it in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
 - **Show pairing QR…** — opens `/qr.png` in your default browser so
   you can re-pair a phone without digging up the console.
 - **Quit** — gracefully stops the server.
@@ -92,7 +92,7 @@ The default layout (override per site via the profile dropdown):
 | ------------ | --------- | ----------------- | --------------- |
 | Play / Pause | `space`   | `k`               | `space`         |
 | −10s / +10s  | `←` / `→` | `j` / `l`         | `←` / `→`       |
-| −30s / +30s  | 3×arrow   | `shift+←` / `→`   | 3×arrow         |
+| −30s / +30s  | 3×arrow   | `shift+←` / `shift+→` | 3×arrow    |
 | Volume       | `↑` / `↓` | `↑` / `↓`         | `↑` / `↓`       |
 | Mute         | `m`       | `m`               | `m`             |
 | Fullscreen   | `f`       | `f`               | `f`             |
@@ -103,7 +103,7 @@ The default layout (override per site via the profile dropdown):
 ## Layout
 
 ```
-server/   Node + TS. HTTP + WebSocket + keystroke simulation.
+server/   Rust binary. HTTP + WebSocket + keystroke simulation.
 client/   Vite + React PWA. Served from the laptop, installs to phone.
 ```
 
