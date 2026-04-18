@@ -12,7 +12,7 @@ interface SysTrayInstance {
   kill(exitNode?: boolean): Promise<void>;
 }
 
-const SysTray = Systray2 as unknown as new (conf: {
+const SysTray = (Systray2 as unknown as { default: unknown }).default as new (conf: {
   menu: Menu;
   debug?: boolean;
   copyDir?: boolean | string;
