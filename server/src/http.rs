@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use axum::Router;
-use axum::extract::State;
+use axum::extract::{FromRef, State};
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
 use axum::routing::get;
@@ -14,7 +14,26 @@ use tower_http::services::{ServeDir, ServeFile};
 use crate::state::AppState;
 use crate::ws::ws_handler;
 
-pub fn build_router(state: Arc<AppState>, client_dir: PathBuf, pairing_url: String) -> Router {
+/// Axum router state: includes both app state and the path to index.html.
+/// `FromRef` lets handlers extract `Arc<AppState>` directly when they don't need the index path.
+#[derive(Clone)]
+pub struct RouterState {
+    pub app: Arc<AppState>,
+    pub index_html: PathBuf,
+}
+
+impl FromRef<RouterState> for Arc<AppState> {
+    fn from_ref(s: &RouterState) -> Self {
+        s.app.clone()
+    }
+}
+
+pub fn build_router(app: Arc<AppState>, client_dir: PathBuf, pairing_url: String) -> Router {
+    let state = RouterState {
+        app,
+        index_html: client_dir.join("index.html"),
+    };
+
     Router::new()
         .route("/", get(ws_handler))
         .route("/qr.png", get(move |s| qr_handler(s, pairing_url.clone())))

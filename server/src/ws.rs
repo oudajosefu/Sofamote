@@ -3,11 +3,12 @@ use std::sync::Arc;
 
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{Query, State, WebSocketUpgrade};
-use axum::http::StatusCode;
+use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
 use subtle::ConstantTimeEq;
 use tokio::sync::broadcast;
 
+use crate::http::RouterState;
 use crate::keystrokes;
 use crate::profiles;
 use crate::state::{AppState, StateEvent};
@@ -16,21 +17,31 @@ use crate::types::{Command, ServerMessage, ALL_PROFILES, VERSION};
 pub async fn ws_handler(
     ws: Option<WebSocketUpgrade>,
     Query(params): Query<HashMap<String, String>>,
-    State(state): State<Arc<AppState>>,
+    State(rs): State<RouterState>,
 ) -> impl IntoResponse {
+    // Regular browser GET (no Upgrade header) — serve the SPA entry point
     let ws = match ws {
         Some(w) => w,
-        None => return StatusCode::BAD_REQUEST.into_response(),
+        None => {
+            return match tokio::fs::read(&rs.index_html).await {
+                Ok(bytes) => (
+                    [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+                    bytes,
+                )
+                    .into_response(),
+                Err(_) => StatusCode::NOT_FOUND.into_response(),
+            };
+        }
     };
 
     let provided = params.get("t").map(String::as_str).unwrap_or("");
-    let token = state.token().await;
+    let token = rs.app.token().await;
 
     if !bool::from(provided.as_bytes().ct_eq(token.as_bytes())) {
         return StatusCode::UNAUTHORIZED.into_response();
     }
 
-    ws.on_upgrade(move |socket| handle_socket(socket, state))
+    ws.on_upgrade(move |socket| handle_socket(socket, rs.app))
         .into_response()
 }
 
