@@ -99,4 +99,4 @@ pub const ALL_PROFILES: &[ProfileName] = &[
     ProfileName::Netflix,
 ];
 
-pub const VERSION: &str = "0.3.1";
+pub const VERSION: &str = "0.3.2";
