@@ -5,3 +5,5 @@ dist/
 .env
 .env.local
 config.json
+
+server/target/
