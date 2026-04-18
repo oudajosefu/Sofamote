@@ -28,28 +28,154 @@ phone PWA  ─── WebSocket on LAN ───▶  laptop (Rust server)
    (e.g. YouTube play/pause is `k`, Netflix is `space`) and delivers it
    via [`enigo`](https://crates.io/crates/enigo).
 
-## Requirements
+## Download
 
-- Windows laptop (target platform; should also work on macOS/Linux with
-  minor tweaks).
-- Rust toolchain (`rustup`) with `cargo` on PATH.
-- Node.js (for building the client PWA).
-- Phone on the same WiFi network.
+[Install Sofamote from the latest GitHub release](https://github.com/oudajosefu/remote-media-control/releases/latest)
 
-## Install & run
+Release downloads currently ship as:
+
+- Windows: `.msi` installer and portable `sofamote.exe`
+- macOS: `.dmg`
+- Linux: `.deb`
+
+## End-user requirements
+
+- Laptop and phone on the same WiFi network.
+- A browser tab with the video player focused on the laptop.
+- Windows is the most polished target today, with macOS and Linux
+  release artifacts also published from GitHub Actions.
+
+## End-user installation
+
+### Windows
+
+Download either the `.msi` installer or the `sofamote.exe` asset from
+the latest release page.
+
+| Download | Best for | What changes |
+| -------- | -------- | ------------ |
+| `.msi` installer | Most Windows end users | Installs Sofamote into Program Files, creates a Start Menu shortcut, and gives you a normal uninstall path in Windows. |
+| `sofamote.exe` | Portable or no-install usage | Runs directly with no installer and no uninstall entry. Keep it in a permanent folder before enabling **Launch on startup**. |
+
+On Windows, debug runs still print a QR code in the console. The
+installed app and direct release executable behave the same after
+launch: both are release builds, both run as a background tray app with
+no console window, and both open the pairing QR in your browser on the
+first Windows release launch. The difference is installation behavior,
+not runtime behavior.
+
+For regular Windows use, prefer the `.msi` installer. If you use the
+portable `sofamote.exe`, move it out of Downloads first. The
+**Launch on startup** toggle stores the current executable path in the
+Windows `Run` registry key, so moving or deleting a portable copy later
+will break startup.
+
+To get started:
+
+1. Download the asset you want from the latest release page.
+2. Run the installer or launch `sofamote.exe`.
+3. When Windows Firewall prompts, allow access on **private networks
+   only**.
+4. Scan the QR code URL that opens in your browser. The phone will load
+   the PWA, store the token, and can then be added to the home screen
+   for one-tap use.
+
+### macOS
+
+1. Download the `.dmg` from the latest release page.
+2. Open the DMG and move `Sofamote.app` into `/Applications` if you want
+   a normal app install.
+3. Launch Sofamote from Applications.
+4. Pair your phone from the QR flow the app opens or from the tray/menu
+   bar item afterward.
+
+When Apple release credentials are configured in GitHub Actions, the DMG
+is built from a signed app bundle, notarized with Apple, and stapled
+before upload. Those notarized releases should avoid Gatekeeper's
+"unidentified developer" warning.
+
+### Linux
+
+1. Download the `.deb` from the latest release page.
+2. Install it with your package manager, for example:
 
 ```bash
+sudo apt install ./path-to-downloaded.deb
+```
+
+3. Launch Sofamote from your application menu or by running `sofamote`.
+4. Pair your phone from the QR flow.
+
+The published Linux package targets Debian/Ubuntu-style systems.
+
+## Development setup
+
+### Prerequisites
+
+- Git
+- Rust toolchain (`rustup`) with `cargo` on PATH
+- Node.js 20 with npm
+- Phone on the same WiFi network as the development machine
+
+On Ubuntu/Debian, install the Linux desktop dependencies used by the
+tray icon and keyboard automation layers before building the server:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  libgtk-3-dev \
+  libayatana-appindicator3-dev \
+  libxdo-dev \
+  libxcb-shape0-dev \
+  libxcb-xfixes0-dev
+```
+
+### Clone and install
+
+```bash
+git clone https://github.com/oudajosefu/remote-media-control.git
+cd remote-media-control
 npm install
+```
+
+### Run in development
+
+Start the Rust server and the Vite dev client in separate terminals:
+
+```bash
+npm run dev:server
+npm run dev:client
+```
+
+Useful commands:
+
+```bash
+npm run build
 npm start
 ```
 
-On Windows, debug runs still print a QR code in the console. The
-installed app and direct release executable both behave like a
-background tray app instead: on the first Windows release launch,
-Sofamote opens the pairing QR in your browser once, then relies on the
-tray menu afterward. Scan the QR with your phone — the URL looks like
-`http://192.168.x.y:7337/?t=<token>`. The phone loads the PWA, stores
-the token, and can be added to your home screen for one-tap access.
+`npm run dev:server` runs the Rust server in debug mode. On Windows,
+debug runs print the pairing QR in the console. Release-mode Windows
+builds run as a tray app with no console window and open the pairing QR
+in the browser once on first launch.
+
+### Build distributable packages locally
+
+Install the platform-specific Cargo packaging tool first:
+
+```bash
+cargo install cargo-wix      # Windows
+cargo install cargo-bundle   # macOS
+cargo install cargo-deb      # Linux
+```
+
+Then use the matching package script:
+
+```bash
+npm run package:win
+npm run package:mac
+npm run package:linux
+```
 
 ## Release packaging
 
@@ -61,11 +187,6 @@ When GitHub Actions release credentials are configured, Windows release
 builds sign both `sofamote.exe` and the generated MSI. That improves the
 publisher/trust experience, but brand-new releases can still need time
 to build Microsoft SmartScreen reputation.
-
-When Apple release credentials are configured, the macOS DMG is built
-from a signed app bundle, notarized with Apple, and stapled before
-upload. That notarized DMG is expected to avoid Gatekeeper's
-"unidentified developer" warning for downloaded releases.
 
 ## Automated releases
 
@@ -100,8 +221,8 @@ The tray menu (right-click the icon) has:
   `suppressed` and no keystrokes are sent. This is the "arm/disarm"
   switch — use it so stray taps don't pause your movie when you're not
   trying to remote-control.
-- **Launch on startup** — toggle. On Windows, writes the installed
-  executable directly into
+- **Launch on startup** — toggle. On Windows, writes the current release
+  executable path directly into
   `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` so the app starts
   hidden in the tray without a console window.
 - **Show pairing QR…** — opens `/qr.png` in your default browser so
@@ -162,11 +283,12 @@ will stop working.
 
 ## Verifying end-to-end
 
-1. On Windows, launch the installed app or `target\release\sofamote.exe`
-   and confirm no console window appears, the tray icon appears, and the
-   first release launch opens the pairing QR in the browser once. For
-   console-first debugging, run `npm run dev:server` and confirm it
-   prints the QR and logs `Listening on http://<LAN-IP>:7337`.
+1. On Windows, launch the installed app, the downloaded `sofamote.exe`,
+   or a local `target\release\sofamote.exe` build and confirm no console
+   window appears, the tray icon appears, and the first release launch
+   opens the pairing QR in the browser once. For console-first
+   debugging, run `npm run dev:server` and confirm it prints the QR and
+   logs `Listening on http://<LAN-IP>:7337`.
 2. Right-click the tray icon → **Active** to toggle forwarding on.
    The icon should show a green dot overlay.
 3. Open a streaming site on the laptop, start a video, click into the
