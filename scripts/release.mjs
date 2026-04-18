@@ -420,7 +420,9 @@ function detectEol(contents) {
 }
 
 function readCommand(repoRoot, command, args) {
-  return execFileSync(resolveExecutable(command), args, {
+  const invocation = resolveCommandInvocation(command, args)
+
+  return execFileSync(invocation.command, invocation.args, {
     cwd: repoRoot,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
@@ -436,18 +438,26 @@ function readCommandAllowFailure(repoRoot, command, args) {
 }
 
 function runCommand(repoRoot, command, args, stdio) {
-  execFileSync(resolveExecutable(command), args, {
+  const invocation = resolveCommandInvocation(command, args)
+
+  execFileSync(invocation.command, invocation.args, {
     cwd: repoRoot,
     stdio,
   })
 }
 
-function resolveExecutable(command) {
+function resolveCommandInvocation(command, args) {
   if (process.platform === "win32" && command === "npm") {
-    return "npm.cmd"
+    return {
+      command: "cmd.exe",
+      args: ["/d", "/s", "/c", "npm", ...args],
+    }
   }
 
-  return command
+  return {
+    command,
+    args,
+  }
 }
 
 try {
