@@ -67,6 +67,27 @@ from a signed app bundle, notarized with Apple, and stapled before
 upload. That notarized DMG is expected to avoid Gatekeeper's
 "unidentified developer" warning for downloaded releases.
 
+## Automated releases
+
+Use the root release command when you are ready to cut a new version:
+
+```bash
+npm run release -- patch
+npm run release -- minor --dry-run
+npm run release -- 0.3.1
+```
+
+The command must be run from a **clean `main` branch checkout** with an
+`origin` remote configured. It verifies that every repo-owned version
+reference is in sync, updates them together, runs `npm run build`, then
+creates a `chore(release): vX.Y.Z` commit and a lightweight `vX.Y.Z`
+tag.
+
+After a successful run it pushes `main`, then pushes the new tag.
+GitHub Actions releases are triggered by that tag push because
+[`.github/workflows/release.yml`](.github/workflows/release.yml) listens
+for `v*` tags.
+
 ## System tray
 
 The server lives as a tray icon so it can run quietly in the background.
