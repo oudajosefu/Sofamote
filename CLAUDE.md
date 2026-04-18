@@ -39,7 +39,7 @@ Rust binary using `tokio` + `axum`. Single-threaded tray event loop on the main 
 
 - **`main.rs`** — entry point; initializes state, spawns tokio runtime on background thread, runs tray event loop on main thread, prints pairing QR to terminal
 - **`state.rs`** — `AppState`: `Arc<RwLock<Inner>>` + `broadcast::Sender<StateEvent>`; single source of truth for `token`, `is_active`, `auto_launch`; persists on every mutation
-- **`config.rs`** — reads/writes `%APPDATA%/remote-media-control/config.json` (Windows) or `~/.config/remote-media-control/config.json` (Linux/macOS)
+- **`config.rs`** — reads/writes `%APPDATA%/sofamote/config.json` (Windows) or `~/.config/sofamote/config.json` (Linux/macOS)
 - **`ws.rs`** — WebSocket upgrade handler; validates token (constant-time via `subtle`), sends hello + state on connect, dispatches `Command` objects, receives `StateEvent` broadcasts
 - **`http.rs`** — axum router: embedded static files via `rust-embed` for the SPA + `/qr.png` endpoint (generates QR PNG via `qrcode` + `image` crates)
 - **`profiles.rs`** — maps `ActionName` → `ActionRecipe` per site profile (GENERIC, YOUTUBE, NETFLIX); `resolve_action()` is the lookup entry point

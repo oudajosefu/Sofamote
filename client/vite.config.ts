@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg"],
       manifest: {
-        name: "Remote Media Control",
-        short_name: "Remote",
+        name: "Sofamote",
+        short_name: "Sofamote",
         description: "Phone remote for the laptop's focused video",
         theme_color: "#0a0a0a",
         background_color: "#0a0a0a",
@@ -22,17 +22,17 @@ export default defineConfig({
             src: "/favicon.svg",
             sizes: "any",
             type: "image/svg+xml",
-            purpose: "any maskable"
-          }
-        ]
-      }
-    })
+            purpose: "any maskable",
+          },
+        ],
+      },
+    }),
   ],
   server: {
-    host: true
+    host: true,
   },
   build: {
     outDir: "dist",
-    target: "es2020"
-  }
+    target: "es2020",
+  },
 });

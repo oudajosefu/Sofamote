@@ -9,7 +9,7 @@
 
     <Product
         Id='*'
-        Name='Remote Media Control'
+        Name='Sofamote'
         UpgradeCode='95243682-6817-4D21-9E81-A024BD20D3EB'
         Manufacturer='Joseph Odeh'
         Language='1033'
@@ -31,18 +31,18 @@
             DowngradeErrorMessage='A newer version of [ProductName] is already installed. Setup will now exit.'/>
 
         <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/>
-        <Property Id='DiskPrompt' Value='Remote Media Control Installation'/>
+        <Property Id='DiskPrompt' Value='Sofamote Installation'/>
 
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
-                <Directory Id='APPLICATIONFOLDER' Name='Remote Media Control'>
+                <Directory Id='APPLICATIONFOLDER' Name='Sofamote'>
                     <Directory Id='Bin' Name='bin'>
                         <Component Id='binary0' Guid='*'>
                             <File
                                 Id='exe0'
-                                Name='remote-media-control.exe'
+                                Name='sofamote.exe'
                                 DiskId='1'
-                                Source='$(var.CargoTargetBinDir)\remote-media-control.exe'
+                                Source='$(var.CargoTargetBinDir)\sofamote.exe'
                                 KeyPath='yes'/>
                         </Component>
                     </Directory>
@@ -50,18 +50,18 @@
             </Directory>
 
             <Directory Id='ProgramMenuFolder'>
-                <Directory Id='ApplicationProgramsFolder' Name='Remote Media Control'>
+                <Directory Id='ApplicationProgramsFolder' Name='Sofamote'>
                     <Component Id='ApplicationShortcut' Guid='*'>
                         <Shortcut
                             Id='ApplicationStartMenuShortcut'
-                            Name='Remote Media Control'
+                            Name='Sofamote'
                             Description='Phone remote for laptop media'
-                            Target='[Bin]remote-media-control.exe'
+                            Target='[Bin]sofamote.exe'
                             WorkingDirectory='Bin'/>
                         <RemoveFolder Id='CleanUpShortCut' Directory='ApplicationProgramsFolder' On='uninstall'/>
                         <RegistryValue
                             Root='HKCU'
-                            Key='Software\Remote Media Control'
+                            Key='Software\Sofamote'
                             Name='installed'
                             Type='integer'
                             Value='1'
@@ -74,7 +74,7 @@
         <Feature
             Id='Binaries'
             Title='Application'
-            Description='Installs Remote Media Control.'
+            Description='Installs Sofamote.'
             Level='1'
             ConfigurableDirectory='APPLICATIONFOLDER'
             AllowAdvertise='no'

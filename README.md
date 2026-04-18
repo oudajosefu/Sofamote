@@ -1,4 +1,4 @@
-# Remote Media Control
+# Sofamote
 
 A phone-to-laptop remote for controlling the video that is currently playing
 on your laptop's focused browser tab. Designed for the "laptop lid closed,
@@ -61,7 +61,7 @@ The tray menu (right-click the icon) has:
   switch — use it so stray taps don't pause your movie when you're not
   trying to remote-control.
 - **Launch on startup** — toggle. On Windows, writes a hidden VBScript
-  wrapper under `%APPDATA%/remote-media-control/start.vbs` and
+  wrapper under `%APPDATA%/sofamote/start.vbs` and
   registers it in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
 - **Show pairing QR…** — opens `/qr.png` in your default browser so
   you can re-pair a phone without digging up the console.
@@ -88,17 +88,17 @@ To keep the laptop running with its lid closed:
 
 The default layout (override per site via the profile dropdown):
 
-| Button       | Default   | YouTube profile   | Netflix profile |
-| ------------ | --------- | ----------------- | --------------- |
-| Play / Pause | `space`   | `k`               | `space`         |
-| −10s / +10s  | `←` / `→` | `j` / `l`         | `←` / `→`       |
-| −30s / +30s  | 3×arrow   | `shift+←` / `shift+→` | 3×arrow    |
-| Volume       | `↑` / `↓` | `↑` / `↓`         | `↑` / `↓`       |
-| Mute         | `m`       | `m`               | `m`             |
-| Fullscreen   | `f`       | `f`               | `f`             |
-| Captions     | `c`       | `c`               | `c`             |
-| Next episode | —         | `shift+n`         | `shift+n`       |
-| Speed −/+    | —         | `shift+,` / `shift+.` | —           |
+| Button       | Default   | YouTube profile       | Netflix profile |
+| ------------ | --------- | --------------------- | --------------- |
+| Play / Pause | `space`   | `k`                   | `space`         |
+| −10s / +10s  | `←` / `→` | `j` / `l`             | `←` / `→`       |
+| −30s / +30s  | 3×arrow   | `shift+←` / `shift+→` | 3×arrow         |
+| Volume       | `↑` / `↓` | `↑` / `↓`             | `↑` / `↓`       |
+| Mute         | `m`       | `m`                   | `m`             |
+| Fullscreen   | `f`       | `f`                   | `f`             |
+| Captions     | `c`       | `c`                   | `c`             |
+| Next episode | —         | `shift+n`             | `shift+n`       |
+| Speed −/+    | —         | `shift+,` / `shift+.` | —               |
 
 ## Layout
 
@@ -110,7 +110,7 @@ client/   Vite + React PWA. Served from the laptop, installs to phone.
 ## Security
 
 The server generates a 128-bit random token on first launch and persists
-it to `%APPDATA%/remote-media-control/config.json`. Every WebSocket
+it to `%APPDATA%/sofamote/config.json`. Every WebSocket
 upgrade must present the same token (checked in constant time) or the
 connection is rejected with HTTP 401. The token is embedded in the QR
 code URL, so anyone who can see the QR can pair.

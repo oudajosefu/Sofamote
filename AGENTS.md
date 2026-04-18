@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Remote media control — a phone-to-laptop remote for controlling video playback via OS-level keystrokes. Phone PWA connects over WebSocket on the LAN to a Rust server that translates taps into keystrokes delivered to the focused browser window. See [README.md](README.md) for full details.
+Sofamote — a phone-to-laptop remote for controlling video playback via OS-level keystrokes. Phone PWA connects over WebSocket on the LAN to a Rust server that translates taps into keystrokes delivered to the focused browser window. See [README.md](README.md) for full details.
 
 ## Architecture
 
@@ -28,6 +28,7 @@ Server listens on port `7337` (hardcoded constant in `main.rs`).
 ## Code conventions
 
 ### Client (TypeScript/React)
+
 - **No semicolons**, **double quotes**, ESM (`"type": "module"`).
 - **Named exports only** — no default exports (exception: `vite.config.ts`).
 - **TypeScript strict mode** with `noUncheckedIndexedAccess: true` — handle `undefined` on indexed access.
@@ -36,6 +37,7 @@ Server listens on port `7337` (hardcoded constant in `main.rs`).
 - Use `onPointerDown` (not `onClick`) for touch buttons.
 
 ### Server (Rust)
+
 - Standard Rust conventions. `snake_case` functions, `PascalCase` types.
 - Serde `rename_all = "camelCase"` on all wire-format enums to match client expectations.
 
@@ -43,7 +45,7 @@ Server listens on port `7337` (hardcoded constant in `main.rs`).
 
 - **WebSocket protocol**: Client sends `action`-type commands only (e.g. `{ type: "action", name: "playPause", profile: "youtube" }`). Server supports `key`, `combo`, and `action` command types internally.
 - **Profiles** (`server/src/profiles.rs`): Map `ActionName` → `ActionRecipe` per site. `resolve_action()` falls back to `GENERIC` profile.
-- **State** (`server/src/state.rs`): `AppState` wraps `Arc<RwLock<Inner>>` + `broadcast::Sender<StateEvent>`. Persists config to `%APPDATA%/remote-media-control/config.json` (Windows) or `~/.config/remote-media-control/config.json` (Linux/macOS). Broadcasts `StateEvent::ActiveChanged` via tokio broadcast channel.
+- **State** (`server/src/state.rs`): `AppState` wraps `Arc<RwLock<Inner>>` + `broadcast::Sender<StateEvent>`. Persists config to `%APPDATA%/sofamote/config.json` (Windows) or `~/.config/sofamote/config.json` (Linux/macOS). Broadcasts `StateEvent::ActiveChanged` via tokio broadcast channel.
 - **Token auth**: Pairing uses a crypto-random token in the URL query param. Server validates with **constant-time comparison** (`subtle::ConstantTimeEq`). Client stores token in `localStorage`.
 - **Reconnection**: Client `useSocket` hook implements exponential backoff (500ms → 15s cap) with a command queue that flushes on reconnect.
 

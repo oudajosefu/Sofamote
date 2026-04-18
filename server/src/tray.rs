@@ -44,12 +44,8 @@ pub fn build_tray(
     initial_active: bool,
     initial_autolaunch: bool,
 ) -> Result<(TrayHandle, MenuIds), Box<dyn std::error::Error>> {
-    let active_item = CheckMenuItem::new(
-        "Active (forwarding keystrokes)",
-        true,
-        initial_active,
-        None,
-    );
+    let active_item =
+        CheckMenuItem::new("Active (forwarding keystrokes)", true, initial_active, None);
     let autolaunch_item = CheckMenuItem::new("Launch on startup", true, initial_autolaunch, None);
     let show_qr_item = MenuItem::new("Show pairing QR\u{2026}", true, None);
     let quit_item = MenuItem::new("Quit", true, None);
@@ -101,7 +97,7 @@ fn load_icon(active: bool) -> Result<tray_icon::Icon, Box<dyn std::error::Error>
 
 fn tooltip(active: bool, pairing_url: &str) -> String {
     format!(
-        "Remote Media Control \u{2014} {}\n{}",
+        "Sofamote \u{2014} {}\n{}",
         if active { "Active" } else { "Paused" },
         pairing_url
     )

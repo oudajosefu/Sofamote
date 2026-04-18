@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -30,8 +30,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install Node dependencies
         run: npm ci
@@ -99,11 +99,11 @@ jobs:
         if: matrix.os == 'macos'
         run: |
           create-dmg \
-            --volname "Remote Media Control" \
+            --volname "Sofamote" \
             --window-size 600 400 \
             --app-drop-link 450 200 \
-            "Remote-Media-Control.dmg" \
-            "server/target/release/bundle/osx/Remote Media Control.app"
+            "Sofamote.dmg" \
+            "server/target/release/bundle/osx/Sofamote.app"
 
       - name: Upload macOS DMG
         if: matrix.os == 'macos'

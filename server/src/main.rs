@@ -21,7 +21,7 @@ fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "remote_media_control=info".into()),
+                .unwrap_or_else(|_| "sofamote=info".into()),
         )
         .init();
 
@@ -124,7 +124,9 @@ async fn run_server(
                 TrayCmd::SetActive(v) => state_for_cmds.set_active(v).await,
                 TrayCmd::SetAutoLaunch(v) => {
                     state_for_cmds.set_auto_launch(v).await;
-                    tokio::task::spawn_blocking(move || autolaunch::set_auto_launch(v)).await.ok();
+                    tokio::task::spawn_blocking(move || autolaunch::set_auto_launch(v))
+                        .await
+                        .ok();
                 }
             }
         }

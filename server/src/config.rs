@@ -14,7 +14,7 @@ pub struct PersistedConfig {
 pub fn config_path() -> PathBuf {
     dirs::config_dir()
         .expect("cannot determine config directory")
-        .join("remote-media-control")
+        .join("sofamote")
         .join("config.json")
 }
 

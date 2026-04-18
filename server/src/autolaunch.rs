@@ -9,7 +9,7 @@ mod platform {
     use winreg::enums::*;
     use winreg::RegKey;
 
-    const APP_NAME: &str = "RemoteMediaControl";
+    const APP_NAME: &str = "Sofamote";
     const RUN_KEY: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 
     pub fn set_auto_launch(enabled: bool, exe: &PathBuf) -> Result<(), String> {
@@ -28,7 +28,7 @@ mod platform {
     }
 
     fn write_vbs_wrapper(exe: &PathBuf) -> std::io::Result<PathBuf> {
-        let config_dir = dirs::config_dir().unwrap().join("remote-media-control");
+        let config_dir = dirs::config_dir().unwrap().join("sofamote");
         std::fs::create_dir_all(&config_dir)?;
         let vbs = config_dir.join("start.vbs");
         let script = format!(
@@ -44,7 +44,7 @@ mod platform {
 mod platform {
     use std::path::PathBuf;
 
-    const DESKTOP_FILE: &str = "remote-media-control.desktop";
+    const DESKTOP_FILE: &str = "sofamote.desktop";
 
     pub fn set_auto_launch(enabled: bool, exe: &PathBuf) -> Result<(), String> {
         let autostart = dirs::config_dir().ok_or("no config dir")?.join("autostart");
@@ -52,7 +52,7 @@ mod platform {
         if enabled {
             std::fs::create_dir_all(&autostart).map_err(|e| e.to_string())?;
             let content = format!(
-                "[Desktop Entry]\nType=Application\nName=Remote Media Control\nExec={}\nHidden=false\nNoDisplay=false\nX-GNOME-Autostart-enabled=true\n",
+                "[Desktop Entry]\nType=Application\nName=Sofamote\nExec={}\nHidden=false\nNoDisplay=false\nX-GNOME-Autostart-enabled=true\n",
                 exe.display()
             );
             std::fs::write(&desktop, content).map_err(|e| e.to_string())
@@ -66,7 +66,7 @@ mod platform {
 mod platform {
     use std::path::PathBuf;
 
-    const PLIST_FILE: &str = "com.remote-media-control.plist";
+    const PLIST_FILE: &str = "com.sofamote.plist";
 
     pub fn set_auto_launch(enabled: bool, exe: &PathBuf) -> Result<(), String> {
         let agents_dir = dirs::home_dir()
@@ -81,7 +81,7 @@ mod platform {
                  <!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n\
                  <plist version=\"1.0\">\n\
                  <dict>\n\
-                   <key>Label</key><string>com.remote-media-control</string>\n\
+                   <key>Label</key><string>com.sofamote</string>\n\
                    <key>ProgramArguments</key>\n\
                    <array><string>{}</string></array>\n\
                    <key>RunAtLoad</key><true/>\n\
