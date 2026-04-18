@@ -6,7 +6,7 @@ import { buildWsUrl, rememberToken } from "./pairing";
 export function App() {
   const token = useMemo(() => rememberToken(), []);
   const url = useMemo(() => (token ? buildWsUrl(token) : null), [token]);
-  const { state, send } = useSocket({ url });
+  const { state, active, send } = useSocket({ url });
 
   if (!token) {
     return (
@@ -17,5 +17,5 @@ export function App() {
     );
   }
 
-  return <RemoteUI state={state} send={send} />;
+  return <RemoteUI state={state} active={active} send={send} />;
 }

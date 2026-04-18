@@ -3,6 +3,7 @@ import type { ActionName, Command, ConnectionState, ProfileName } from "./types"
 
 interface Props {
   state: ConnectionState;
+  active: boolean;
   send: (cmd: Command) => void;
 }
 
@@ -17,7 +18,7 @@ function hapticTap(): void {
   if (typeof navigator.vibrate === "function") navigator.vibrate(15);
 }
 
-export function RemoteUI({ state, send }: Props) {
+export function RemoteUI({ state, active, send }: Props) {
   const [profile, setProfile] = useState<ProfileName>("auto");
 
   const fire = useCallback(
@@ -28,10 +29,15 @@ export function RemoteUI({ state, send }: Props) {
     [send, profile]
   );
 
-  const dot =
-    state === "open" ? "#4ade80" : state === "connecting" ? "#facc15" : "#ef4444";
-  const label =
-    state === "open" ? "connected" : state === "connecting" ? "connecting…" : "offline";
+  let dot = "#ef4444";
+  let label = "offline";
+  if (state === "connecting") {
+    dot = "#facc15";
+    label = "connecting…";
+  } else if (state === "open") {
+    dot = active ? "#4ade80" : "#f59e0b";
+    label = active ? "active" : "paused (tap tray icon)";
+  }
 
   return (
     <div className="remote">
@@ -52,6 +58,12 @@ export function RemoteUI({ state, send }: Props) {
           {label}
         </span>
       </header>
+
+      {state === "open" && !active && (
+        <div className="banner">
+          Server is paused. Click the tray icon on the laptop to activate.
+        </div>
+      )}
 
       <main className="grid">
         <button className="btn small" onPointerDown={() => fire("volDown")} aria-label="Volume down">

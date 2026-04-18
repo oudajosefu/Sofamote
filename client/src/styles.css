@@ -69,6 +69,17 @@ body {
   display: inline-block;
 }
 
+.banner {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+  border-radius: 12px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  text-align: center;
+}
+
 .grid {
   flex: 1;
   display: grid;

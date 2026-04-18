@@ -25,7 +25,8 @@ export type Command = ActionCommand;
 
 export type ServerMessage =
   | { type: "hello"; version: string; profiles: ProfileName[] }
-  | { type: "ack"; id?: string }
+  | { type: "state"; active: boolean }
+  | { type: "ack"; id?: string; suppressed?: boolean }
   | { type: "error"; message: string };
 
 export type ConnectionState = "connecting" | "open" | "closed";

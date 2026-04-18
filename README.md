@@ -42,10 +42,35 @@ npm install
 npm start
 ```
 
-The server prints a QR code in the console. Scan it with your phone —
-the URL looks like `http://192.168.x.y:7337/?t=<token>`. The phone loads
-the PWA, stores the token, and can be added to your home screen for
-one-tap access.
+The server prints a QR code in the console **and** drops a tray icon
+into your taskbar. Scan the QR with your phone — the URL looks like
+`http://192.168.x.y:7337/?t=<token>`. The phone loads the PWA, stores
+the token, and can be added to your home screen for one-tap access.
+
+## System tray
+
+The server lives as a tray icon so it can run quietly in the background.
+The tray menu (right-click the icon) has:
+
+- **Active (forwarding keystrokes)** — toggle. When checked, the tray
+  icon shows a **green dot** overlay and the server turns phone taps
+  into real keystrokes. When unchecked, the WebSocket connection stays
+  open so your phone reconnects instantly, but commands are acked as
+  `suppressed` and no keystrokes are sent. This is the "arm/disarm"
+  switch — use it so stray taps don't pause your movie when you're not
+  trying to remote-control.
+- **Launch on startup** — toggle. On Windows, writes a hidden VBScript
+  wrapper under `%APPDATA%/remote-media-control/start.vbs` and
+  registers it in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+  via [`auto-launch`](https://www.npmjs.com/package/auto-launch).
+- **Show pairing QR…** — opens `/qr.png` in your default browser so
+  you can re-pair a phone without digging up the console.
+- **Quit** — gracefully stops the server.
+
+The PWA reflects active state: the status dot is **green** when the
+server is active, **amber** when the server is connected but paused
+(with a banner suggesting you flip the tray toggle), and **red** when
+offline.
 
 ## Laptop-side setup (Windows)
 
@@ -96,14 +121,22 @@ will stop working.
 
 ## Verifying end-to-end
 
-1. `npm start` on the laptop. Confirm the console prints a QR and
-   `Listening on http://<LAN-IP>:7337`.
-2. Open a streaming site on the laptop, start a video, click into the
+1. `npm start` on the laptop. Confirm the console prints a QR, the
+   tray icon appears, and it logs `Listening on http://<LAN-IP>:7337`.
+2. Right-click the tray icon → **Active** to toggle forwarding on.
+   The icon should show a green dot overlay.
+3. Open a streaming site on the laptop, start a video, click into the
    player so it has focus.
-3. Scan the QR from your phone. The PWA should load and the status dot
-   should turn green.
-4. Tap **Play/Pause** — video pauses. Tap **+10s** — video scrubs.
-5. Switch profile to **YouTube** on a YouTube tab; confirm `k` is used
+4. Scan the QR from your phone. The PWA should load, the status dot
+   should turn green, and the layout should say "active".
+5. Tap **Play/Pause** — video pauses. Tap **+10s** — video scrubs.
+6. Right-click the tray icon → uncheck **Active**. The PWA dot should
+   turn amber with a "paused" banner; taps should no longer move the
+   video.
+7. Right-click the tray icon → check **Launch on startup**, reboot,
+   and confirm the server comes up automatically (no console window
+   on Windows — it's spawned hidden via `start.vbs`).
+8. Switch profile to **YouTube** on a YouTube tab; confirm `k` is used
    instead of `space`.
-6. Close the lid. Confirm the remote still controls playback.
-7. Toggle phone airplane mode briefly; PWA should auto-reconnect.
+9. Close the lid. Confirm the remote still controls playback.
+10. Toggle phone airplane mode briefly; PWA should auto-reconnect.

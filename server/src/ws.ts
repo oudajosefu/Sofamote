@@ -4,7 +4,8 @@ import { timingSafeEqual } from "node:crypto";
 import { combo, tap } from "./keystrokes.js";
 import { listProfiles, resolveAction } from "./profiles.js";
 import { commandSchema, type ServerMessage } from "./types.js";
-import { tokenFromRequestUrl } from "./pairing.js";
+import { tokenFromRequestUrl } from "./config.js";
+import type { AppState } from "./state.js";
 
 const VERSION = "0.1.0";
 
@@ -23,7 +24,11 @@ function send(socket: WebSocket, msg: ServerMessage): void {
   }
 }
 
-export function attachWebSocket(http: HttpServer, token: string): WebSocketServer {
+export function attachWebSocket(
+  http: HttpServer,
+  token: string,
+  state: AppState
+): WebSocketServer {
   const wss = new WebSocketServer({ noServer: true });
 
   http.on("upgrade", (req, socket, head) => {
@@ -38,8 +43,17 @@ export function attachWebSocket(http: HttpServer, token: string): WebSocketServe
     });
   });
 
+  state.onActiveChange((active) => {
+    for (const client of wss.clients) {
+      if (client.readyState === client.OPEN) {
+        send(client, { type: "state", active });
+      }
+    }
+  });
+
   wss.on("connection", (ws) => {
     send(ws, { type: "hello", version: VERSION, profiles: listProfiles() });
+    send(ws, { type: "state", active: state.isActive });
 
     ws.on("message", async (data) => {
       let raw: unknown;
@@ -52,6 +66,10 @@ export function attachWebSocket(http: HttpServer, token: string): WebSocketServe
       const parsed = commandSchema.safeParse(raw);
       if (!parsed.success) {
         send(ws, { type: "error", message: "invalid command" });
+        return;
+      }
+      if (!state.isActive) {
+        send(ws, { type: "ack", suppressed: true });
         return;
       }
       const cmd = parsed.data;

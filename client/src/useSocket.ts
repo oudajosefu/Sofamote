@@ -7,6 +7,7 @@ interface Options {
 
 export function useSocket({ url }: Options) {
   const [state, setState] = useState<ConnectionState>("connecting");
+  const [active, setActive] = useState<boolean>(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const queueRef = useRef<Command[]>([]);
@@ -39,12 +40,14 @@ export function useSocket({ url }: Options) {
       try {
         const msg = JSON.parse(String(ev.data)) as ServerMessage;
         if (msg.type === "error") setLastError(msg.message);
+        if (msg.type === "state") setActive(msg.active);
       } catch {
         // ignore
       }
     };
     ws.onclose = () => {
       setState("closed");
+      setActive(false);
       if (!shouldConnectRef.current) return;
       const delay = Math.min(15000, 500 * 2 ** retryRef.current);
       retryRef.current += 1;
@@ -82,5 +85,5 @@ export function useSocket({ url }: Options) {
     []
   );
 
-  return { state, lastError, send };
+  return { state, active, lastError, send };
 }
