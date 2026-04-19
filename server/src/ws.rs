@@ -44,9 +44,11 @@ pub async fn ws_handler(
 }
 
 async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
+    let bindings = profiles::action_bindings();
     let hello = ServerMessage::Hello {
         version: VERSION,
         profiles: ALL_PROFILES,
+        bindings: &bindings,
     };
     if send_msg(&mut socket, &hello).await.is_err() {
         return;

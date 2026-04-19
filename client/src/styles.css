@@ -94,10 +94,13 @@ body {
   color: inherit;
   border: 1px solid #2a2a2e;
   border-radius: 16px;
-  font-size: 1.25rem;
-  font-weight: 600;
   min-height: 4rem;
-  transition: transform 60ms ease, background 120ms ease;
+  padding: 0.7rem 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: transform 60ms ease, background 120ms ease, border-color 120ms ease, color 120ms ease;
   cursor: pointer;
 }
 
@@ -106,16 +109,20 @@ body {
   background: #29292e;
 }
 
+.btn:disabled {
+  background: #151518;
+  color: #71717a;
+  border-color: #202024;
+  cursor: default;
+}
+
 .btn.small {
-  font-size: 0.95rem;
-  font-weight: 500;
   min-height: 3rem;
 }
 
 .btn.primary {
   background: linear-gradient(180deg, #3b82f6, #1d4ed8);
   border: none;
-  font-size: 2rem;
   border-radius: 999px;
   aspect-ratio: 1 / 1;
   min-height: 0;
@@ -123,10 +130,52 @@ body {
   width: 100%;
 }
 
+.btn.primary:disabled {
+  background: #182231;
+  border: 1px solid #223045;
+}
+
 .btn.seek {
-  font-size: 1.5rem;
+  padding-inline: 0.4rem;
 }
 
 .btn.wide {
   grid-column: span 3;
+}
+
+.btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  line-height: 1.05;
+}
+
+.btn-key {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #a1a1aa;
+}
+
+.btn-main {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.btn.small .btn-main {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.btn.seek .btn-main {
+  font-size: 1.5rem;
+}
+
+.btn.primary .btn-main {
+  font-size: 2rem;
+}
+
+.btn:disabled .btn-key {
+  color: #71717a;
 }

@@ -15,6 +15,8 @@ export type ActionName =
   | "speedDown"
   | "speedUp";
 
+export type ActionBindings = Record<ProfileName, Partial<Record<ActionName, string>>>;
+
 export interface ActionCommand {
   type: "action";
   name: ActionName;
@@ -24,7 +26,7 @@ export interface ActionCommand {
 export type Command = ActionCommand;
 
 export type ServerMessage =
-  | { type: "hello"; version: string; profiles: ProfileName[] }
+  | { type: "hello"; version: string; profiles: ProfileName[]; bindings: ActionBindings }
   | { type: "state"; active: boolean }
   | { type: "ack"; id?: string; suppressed?: boolean }
   | { type: "error"; message: string };

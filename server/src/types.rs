@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
@@ -47,6 +49,9 @@ pub enum ActionName {
     SpeedUp,
 }
 
+pub type ProfileBindings = HashMap<ActionName, String>;
+pub type ActionBindings = HashMap<ProfileName, ProfileBindings>;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ProfileName {
@@ -79,6 +84,7 @@ pub enum ServerMessage<'a> {
     Hello {
         version: &'a str,
         profiles: &'a [ProfileName],
+        bindings: &'a ActionBindings,
     },
     State {
         active: bool,
@@ -97,6 +103,22 @@ pub const ALL_PROFILES: &[ProfileName] = &[
     ProfileName::Generic,
     ProfileName::Youtube,
     ProfileName::Netflix,
+];
+
+pub const ALL_ACTIONS: &[ActionName] = &[
+    ActionName::PlayPause,
+    ActionName::SeekBack10,
+    ActionName::SeekFwd10,
+    ActionName::SeekBack30,
+    ActionName::SeekFwd30,
+    ActionName::VolUp,
+    ActionName::VolDown,
+    ActionName::Mute,
+    ActionName::Fullscreen,
+    ActionName::Captions,
+    ActionName::NextEpisode,
+    ActionName::SpeedDown,
+    ActionName::SpeedUp,
 ];
 
 pub const VERSION: &str = "0.3.2";
