@@ -30,7 +30,7 @@ phone PWA  ─── WebSocket on LAN ───▶  laptop (Rust server)
 
 ## Download
 
-[Install Sofamote from the latest GitHub release](https://github.com/oudajosefu/remote-media-control/releases/latest)
+[Install Sofamote from the latest GitHub release](https://github.com/oudajosefu/sofamote/releases/latest)
 
 Release downloads currently ship as:
 
@@ -133,8 +133,8 @@ sudo apt-get install -y \
 ### Clone and install
 
 ```bash
-git clone https://github.com/oudajosefu/remote-media-control.git
-cd remote-media-control
+git clone https://github.com/oudajosefu/sofamote.git
+cd sofamote
 npm install
 ```
 

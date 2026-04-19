@@ -34,7 +34,7 @@
         <Property Id='DiskPrompt' Value='Sofamote Installation'/>
         <Icon Id='SofamoteIcon' SourceFile='assets\app-icon.ico'/>
         <Property Id='ARPPRODUCTICON' Value='SofamoteIcon'/>
-        <Property Id='ARPURLINFOABOUT' Value='https://github.com/oudajosefu/remote-media-control'/>
+        <Property Id='ARPURLINFOABOUT' Value='https://github.com/oudajosefu/sofamote'/>
         <Property Id='WIXUI_INSTALLDIR' Value='APPLICATIONFOLDER'/>
         <WixVariable Id='WixUILicenseRtf' Value='wix\License.rtf'/>
 

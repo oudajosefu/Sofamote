@@ -5,8 +5,8 @@ edition = "2021"
 authors = ["Joseph Odeh <odeh.joseph@gmail.com>"]
 description = "Phone remote for laptop media"
 license = "MIT"
-homepage = "https://github.com/oudajosefu/remote-media-control"
-repository = "https://github.com/oudajosefu/remote-media-control"
+homepage = "https://github.com/oudajosefu/sofamote"
+repository = "https://github.com/oudajosefu/sofamote"
 
 [[bin]]
 name = "sofamote"
