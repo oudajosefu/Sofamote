@@ -10,7 +10,11 @@ use image::GrayImage;
 use qrcode::QrCode;
 use rust_embed::RustEmbed;
 
+use crate::single_instance::{
+    INSTANCE_HEADER_NAME, INSTANCE_HEADER_VALUE, INSTANCE_PROBE_PATH, INSTANCE_VERSION_HEADER_NAME,
+};
 use crate::state::AppState;
+use crate::types::VERSION;
 use crate::ws::ws_handler;
 
 #[derive(RustEmbed)]
@@ -34,6 +38,7 @@ pub fn build_router(app: Arc<AppState>, pairing_url: String) -> Router {
 
     Router::new()
         .route("/", get(ws_handler))
+        .route(INSTANCE_PROBE_PATH, get(instance_probe_handler))
         .route("/qr.png", get(move |s| qr_handler(s, pairing_url.clone())))
         .fallback(static_handler)
         .with_state(state)
@@ -73,6 +78,17 @@ pub fn get_index_html() -> Option<Vec<u8>> {
     ClientAssets::get("index.html").map(|f| f.data.to_vec())
 }
 
+async fn instance_probe_handler() -> Response {
+    instance_probe_response()
+}
+
+fn instance_probe_response() -> Response {
+    let mut headers = HeaderMap::new();
+    headers.insert(INSTANCE_HEADER_NAME, INSTANCE_HEADER_VALUE.parse().unwrap());
+    headers.insert(INSTANCE_VERSION_HEADER_NAME, VERSION.parse().unwrap());
+    (StatusCode::NO_CONTENT, headers).into_response()
+}
+
 async fn qr_handler(State(_): State<Arc<AppState>>, pairing_url: String) -> impl IntoResponse {
     match generate_qr_png(&pairing_url) {
         Ok(bytes) => {
@@ -95,4 +111,32 @@ fn generate_qr_png(url: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let mut buf = Vec::new();
     dynamic.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::Png)?;
     Ok(buf)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::instance_probe_response;
+    use crate::single_instance::{
+        INSTANCE_HEADER_NAME, INSTANCE_HEADER_VALUE, INSTANCE_VERSION_HEADER_NAME,
+    };
+    use crate::types::VERSION;
+    use axum::http::StatusCode;
+
+    #[test]
+    fn instance_probe_response_has_expected_marker_headers() {
+        let response = instance_probe_response();
+
+        assert_eq!(response.status(), StatusCode::NO_CONTENT);
+        assert_eq!(
+            response.headers().get(INSTANCE_HEADER_NAME).unwrap(),
+            INSTANCE_HEADER_VALUE
+        );
+        assert_eq!(
+            response
+                .headers()
+                .get(INSTANCE_VERSION_HEADER_NAME)
+                .unwrap(),
+            VERSION
+        );
+    }
 }

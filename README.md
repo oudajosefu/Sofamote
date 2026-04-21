@@ -64,6 +64,10 @@ no console window, and both open the pairing QR in your browser on the
 first Windows release launch. The difference is installation behavior,
 not runtime behavior.
 
+If you launch Sofamote again while it is already running, it will show
+an "already running" notice and keep using the original tray instance
+instead of spawning a duplicate icon.
+
 For regular Windows use, prefer the `.msi` installer. If you use the
 portable `sofamote.exe`, move it out of Downloads first. The
 **Launch on startup** toggle stores the current executable path in the
@@ -89,6 +93,9 @@ To get started:
 4. Pair your phone from the QR flow the app opens or from the tray/menu
    bar item afterward.
 
+Launching Sofamote again while it is already running shows an
+"already running" notice and keeps the original menu bar instance.
+
 When Apple release credentials are configured in GitHub Actions, the DMG
 is built from a signed app bundle, notarized with Apple, and stapled
 before upload. Those notarized releases should avoid Gatekeeper's
@@ -105,6 +112,9 @@ sudo apt install ./path-to-downloaded.deb
 
 3. Launch Sofamote from your application menu or by running `sofamote`.
 4. Pair your phone from the QR flow.
+
+Relaunching Sofamote while it is already running shows an
+"already running" notice and keeps the existing tray instance.
 
 The published Linux package targets Debian/Ubuntu-style systems.
 
@@ -229,6 +239,10 @@ The tray menu (right-click the icon) has:
   you can re-pair a phone after the one-time first-launch handoff.
 - **Quit** — gracefully stops the server.
 
+Launching Sofamote again from Start Menu, Applications, or the app menu
+does not create a second tray/menu bar instance. Instead, the new
+process shows an "already running" notice and exits.
+
 The PWA reflects active state: the status dot is **green** when the
 server is active, **amber** when the server is connected but paused
 (with a banner suggesting you flip the tray toggle), and **red** when
@@ -289,20 +303,23 @@ will stop working.
    opens the pairing QR in the browser once. For console-first
    debugging, run `npm run dev:server` and confirm it prints the QR and
    logs `Listening on http://<LAN-IP>:7337`.
-2. Right-click the tray icon → **Active** to toggle forwarding on.
+2. Launch Sofamote again while it is already running. Confirm it shows
+   an "already running" notice and does not create a second tray or
+   menu bar icon.
+3. Right-click the tray icon → **Active** to toggle forwarding on.
    The icon should show a green dot overlay.
-3. Open a streaming site on the laptop, start a video, click into the
+4. Open a streaming site on the laptop, start a video, click into the
    player so it has focus.
-4. Scan the QR from your phone. The PWA should load, the status dot
+5. Scan the QR from your phone. The PWA should load, the status dot
    should turn green, and the layout should say "active".
-5. Tap **Play/Pause** — video pauses. Tap **+10s** — video scrubs.
-6. Right-click the tray icon → uncheck **Active**. The PWA dot should
+6. Tap **Play/Pause** — video pauses. Tap **+10s** — video scrubs.
+7. Right-click the tray icon → uncheck **Active**. The PWA dot should
    turn amber with a "paused" banner; taps should no longer move the
    video.
-7. Right-click the tray icon → check **Launch on startup**, reboot,
+8. Right-click the tray icon → check **Launch on startup**, reboot,
    and confirm the server comes up automatically in the tray with no
    console window on Windows.
-8. Switch profile to **YouTube** on a YouTube tab; confirm `k` is used
+9. Switch profile to **YouTube** on a YouTube tab; confirm `k` is used
    instead of `space`.
-9. Close the lid. Confirm the remote still controls playback.
-10. Toggle phone airplane mode briefly; PWA should auto-reconnect.
+10. Close the lid. Confirm the remote still controls playback.
+11. Toggle phone airplane mode briefly; PWA should auto-reconnect.

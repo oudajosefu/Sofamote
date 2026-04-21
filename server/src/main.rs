@@ -9,6 +9,7 @@ mod http;
 mod keystrokes;
 mod net;
 mod profiles;
+mod single_instance;
 mod state;
 mod tray;
 mod types;
@@ -17,6 +18,7 @@ mod ws;
 use std::sync::{mpsc, Arc};
 use std::time::Duration;
 
+use single_instance::ClaimResult;
 use state::{AppState, StateEvent};
 use tray::TrayCmd;
 
@@ -45,6 +47,12 @@ fn main() {
         )
         .init();
 
+    let listener = match single_instance::claim_primary_listener(PORT) {
+        ClaimResult::Primary(listener) => listener,
+        ClaimResult::Exit(code) if code == 0 => return,
+        ClaimResult::Exit(code) => std::process::exit(code),
+    };
+
     let cfg = config::load_or_create();
     let lan_ip = net::get_lan_ip();
     let pairing_url = format!("http://{}:{}/?t={}", lan_ip, PORT, cfg.token);
@@ -70,7 +78,15 @@ fn main() {
     let server_thread = std::thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
         rt.block_on(async move {
-            run_server(state_bg, tray_rx, pairing_url_bg, shutdown_rx, startup_tx).await;
+            run_server(
+                state_bg,
+                tray_rx,
+                pairing_url_bg,
+                listener,
+                shutdown_rx,
+                startup_tx,
+            )
+            .await;
         });
     });
 
@@ -154,6 +170,7 @@ async fn run_server(
     state: Arc<AppState>,
     mut tray_rx: tokio::sync::mpsc::UnboundedReceiver<TrayCmd>,
     pairing_url: String,
+    listener: std::net::TcpListener,
     shutdown_rx: tokio::sync::oneshot::Receiver<()>,
     startup_tx: mpsc::Sender<StartupSignal>,
 ) {
@@ -174,11 +191,11 @@ async fn run_server(
     });
 
     let router = http::build_router(state, pairing_url.clone());
-    let listener = match tokio::net::TcpListener::bind(format!("0.0.0.0:{PORT}")).await {
+    let listener = match tokio::net::TcpListener::from_std(listener) {
         Ok(l) => l,
         Err(e) => {
             startup_tx.send(StartupSignal::Failed).ok();
-            tracing::error!("cannot bind port {PORT}: {e}");
+            tracing::error!("cannot adopt listener on port {PORT}: {e}");
             return;
         }
     };
