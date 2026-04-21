@@ -12,6 +12,8 @@ mod platform {
 
     const APP_NAME: &str = "Sofamote";
     const RUN_KEY: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+    const LEGACY_RUN_VALUE_NAMES: &[&str] = &["RemoteMediaControl", "Remote Media Control"];
+    const LEGACY_WRAPPER_DIR_NAMES: &[&str] = &["sofamote", "remote-media-control"];
 
     pub fn set_auto_launch(enabled: bool, exe: &PathBuf) -> Result<(), String> {
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
@@ -19,26 +21,48 @@ mod platform {
             .open_subkey_with_flags(RUN_KEY, KEY_SET_VALUE | KEY_QUERY_VALUE)
             .map_err(|e| e.to_string())?;
 
+        cleanup_legacy_auto_launch(&run).map_err(|e| e.to_string())?;
+
         if enabled {
-            remove_legacy_wrapper().map_err(|e| e.to_string())?;
             let cmd = format!("\"{}\"", exe.display());
             run.set_value(APP_NAME, &cmd).map_err(|e| e.to_string())
         } else {
-            remove_legacy_wrapper().map_err(|e| e.to_string())?;
             run.delete_value(APP_NAME).or_else(|_| Ok(()))
         }
     }
 
-    fn remove_legacy_wrapper() -> std::io::Result<()> {
-        let Some(vbs) = dirs::config_dir().map(|dir| dir.join("sofamote").join("start.vbs")) else {
+    fn cleanup_legacy_auto_launch(run: &RegKey) -> std::io::Result<()> {
+        remove_legacy_run_values(run)?;
+        remove_legacy_wrappers()
+    }
+
+    fn remove_legacy_run_values(run: &RegKey) -> std::io::Result<()> {
+        for value_name in LEGACY_RUN_VALUE_NAMES {
+            match run.delete_value(value_name) {
+                Ok(()) => {}
+                Err(e) if e.kind() == ErrorKind::NotFound => {}
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(())
+    }
+
+    fn remove_legacy_wrappers() -> std::io::Result<()> {
+        let Some(config_dir) = dirs::config_dir() else {
             return Ok(());
         };
 
-        match std::fs::remove_file(vbs) {
-            Ok(()) => Ok(()),
-            Err(e) if e.kind() == ErrorKind::NotFound => Ok(()),
-            Err(e) => Err(e),
+        for dir_name in LEGACY_WRAPPER_DIR_NAMES {
+            let vbs = config_dir.join(dir_name).join("start.vbs");
+            match std::fs::remove_file(vbs) {
+                Ok(()) => {}
+                Err(e) if e.kind() == ErrorKind::NotFound => {}
+                Err(e) => return Err(e),
+            }
         }
+
+        Ok(())
     }
 }
 
