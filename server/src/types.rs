@@ -121,4 +121,4 @@ pub const ALL_ACTIONS: &[ActionName] = &[
     ActionName::SpeedUp,
 ];
 
-pub const VERSION: &str = "0.4.0";
+pub const VERSION: &str = "0.5.0";
