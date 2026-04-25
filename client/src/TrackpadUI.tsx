@@ -14,6 +14,8 @@ const TAP_MAX_MOVEMENT = 5;
 const TAP_MAX_DURATION_MS = 200;
 const DOUBLE_TAP_WINDOW_MS = 300;
 const DOUBLE_TAP_MAX_DISTANCE = 30;
+const TWO_FINGER_TAP_MAX_DURATION_MS = 250;
+const TWO_FINGER_TAP_MAX_MOVEMENT = 12;
 
 function hapticTap(): void {
   if (typeof navigator.vibrate === "function") navigator.vibrate(15);
@@ -36,28 +38,42 @@ const SPECIAL_KEYS: Record<string, string> = {
 };
 
 export function TrackpadUI({ send, state, active }: Props) {
-  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pointers = useRef(
+    new Map<number, { x: number; y: number; startX: number; startY: number; startTime: number }>()
+  );
   const downInfo = useRef<{ time: number; x: number; y: number } | null>(null);
   const lastTap = useRef<{ time: number; x: number; y: number } | null>(null);
   const dragging = useRef(false);
   const dragPointerId = useRef<number | null>(null);
+  // When >=2 pointers were active simultaneously, suppress the single-finger tap-click
+  // on subsequent lifts (avoids spurious left-click after a two-finger gesture)
+  const multiTouchActive = useRef(false);
+  // Tracks a potential two-finger tap → fires right-click on second-finger lift
+  const twoFingerTapCandidate = useRef(false);
   const lastMoveTime = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
       e.currentTarget.setPointerCapture(e.pointerId);
-      const pos = { x: e.clientX, y: e.clientY };
-      pointers.current.set(e.pointerId, pos);
+      const now = Date.now();
+      const entry = {
+        x: e.clientX,
+        y: e.clientY,
+        startX: e.clientX,
+        startY: e.clientY,
+        startTime: now,
+      };
+      pointers.current.set(e.pointerId, entry);
 
       if (pointers.current.size === 1) {
-        downInfo.current = { time: Date.now(), ...pos };
+        downInfo.current = { time: now, x: e.clientX, y: e.clientY };
 
         // Detect double-tap-and-hold: a recent tap landed nearby → enter drag mode
         const prev = lastTap.current;
         if (prev) {
-          const elapsed = Date.now() - prev.time;
-          const dist = Math.hypot(pos.x - prev.x, pos.y - prev.y);
+          const elapsed = now - prev.time;
+          const dist = Math.hypot(e.clientX - prev.x, e.clientY - prev.y);
           if (elapsed < DOUBLE_TAP_WINDOW_MS && dist < DOUBLE_TAP_MAX_DISTANCE) {
             dragging.current = true;
             dragPointerId.current = e.pointerId;
@@ -66,6 +82,22 @@ export function TrackpadUI({ send, state, active }: Props) {
             send({ type: "mouseButton", button: "left", action: "press" });
           }
         }
+      } else if (pointers.current.size === 2 && !dragging.current) {
+        // Second finger landed quickly after the first — candidate for two-finger tap (right click)
+        let firstStartTime = now;
+        for (const [id, p] of pointers.current) {
+          if (id !== e.pointerId) firstStartTime = p.startTime;
+        }
+        if (now - firstStartTime < TWO_FINGER_TAP_MAX_DURATION_MS) {
+          twoFingerTapCandidate.current = true;
+        }
+        multiTouchActive.current = true;
+        // Cancel any pending double-tap-drag intent
+        lastTap.current = null;
+      } else {
+        multiTouchActive.current = true;
+        twoFingerTapCandidate.current = false;
+        lastTap.current = null;
       }
     },
     [send]
@@ -78,7 +110,20 @@ export function TrackpadUI({ send, state, active }: Props) {
 
       const dx = e.clientX - prev.x;
       const dy = e.clientY - prev.y;
-      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      pointers.current.set(e.pointerId, {
+        ...prev,
+        x: e.clientX,
+        y: e.clientY,
+      });
+
+      // Movement past threshold disqualifies a two-finger tap (it's a drag/scroll instead)
+      if (twoFingerTapCandidate.current) {
+        const totalMoved =
+          Math.abs(e.clientX - prev.startX) + Math.abs(e.clientY - prev.startY);
+        if (totalMoved > TWO_FINGER_TAP_MAX_MOVEMENT) {
+          twoFingerTapCandidate.current = false;
+        }
+      }
 
       const now = Date.now();
       if (now - lastMoveTime.current < MOVE_INTERVAL_MS) return;
@@ -113,6 +158,8 @@ export function TrackpadUI({ send, state, active }: Props) {
   const onPointerUp = useCallback(
     (e: React.PointerEvent) => {
       const down = downInfo.current;
+      const startedMultiTouch = multiTouchActive.current;
+      const liftedEntry = pointers.current.get(e.pointerId);
 
       // End of drag — release the held button
       if (dragging.current && dragPointerId.current === e.pointerId) {
@@ -121,13 +168,41 @@ export function TrackpadUI({ send, state, active }: Props) {
         hapticTap();
         send({ type: "mouseButton", button: "left", action: "release" });
         pointers.current.delete(e.pointerId);
-        if (pointers.current.size === 0) downInfo.current = null;
+        if (pointers.current.size === 0) {
+          downInfo.current = null;
+          multiTouchActive.current = false;
+          twoFingerTapCandidate.current = false;
+        }
         lastTap.current = null;
         return;
       }
 
-      // Detect a tap; record it so a quick second tap can start a drag
-      if (pointers.current.size === 1 && down) {
+      // Two-finger tap → right click (fires as the second finger of a 2-finger gesture lifts)
+      if (
+        twoFingerTapCandidate.current &&
+        pointers.current.size === 2 &&
+        liftedEntry
+      ) {
+        const elapsed = Date.now() - liftedEntry.startTime;
+        const moved =
+          Math.abs(e.clientX - liftedEntry.startX) +
+          Math.abs(e.clientY - liftedEntry.startY);
+        if (
+          elapsed < TWO_FINGER_TAP_MAX_DURATION_MS &&
+          moved < TWO_FINGER_TAP_MAX_MOVEMENT
+        ) {
+          hapticTap();
+          send({ type: "mouseClick", button: "right" });
+        }
+        twoFingerTapCandidate.current = false;
+      }
+
+      // Single-finger tap — only count it if no multi-touch occurred during this gesture
+      if (
+        !startedMultiTouch &&
+        pointers.current.size === 1 &&
+        down
+      ) {
         const moved = Math.abs(e.clientX - down.x) + Math.abs(e.clientY - down.y);
         const elapsed = Date.now() - down.time;
         if (moved < TAP_MAX_MOVEMENT && elapsed < TAP_MAX_DURATION_MS) {
@@ -137,10 +212,16 @@ export function TrackpadUI({ send, state, active }: Props) {
         } else {
           lastTap.current = null;
         }
+      } else if (startedMultiTouch) {
+        lastTap.current = null;
       }
 
       pointers.current.delete(e.pointerId);
-      if (pointers.current.size === 0) downInfo.current = null;
+      if (pointers.current.size === 0) {
+        downInfo.current = null;
+        multiTouchActive.current = false;
+        twoFingerTapCandidate.current = false;
+      }
     },
     [send]
   );
@@ -153,7 +234,11 @@ export function TrackpadUI({ send, state, active }: Props) {
         send({ type: "mouseButton", button: "left", action: "release" });
       }
       pointers.current.delete(e.pointerId);
-      if (pointers.current.size === 0) downInfo.current = null;
+      if (pointers.current.size === 0) {
+        downInfo.current = null;
+        multiTouchActive.current = false;
+        twoFingerTapCandidate.current = false;
+      }
     },
     [send]
   );
@@ -219,7 +304,7 @@ export function TrackpadUI({ send, state, active }: Props) {
         onPointerCancel={onPointerCancel}
       >
         <div className="trackpad-hint">
-          Drag · Two-finger scroll · Tap to click · Double-tap-and-hold to drag
+          Drag to move · Tap to click · Two-finger tap to right-click · Two-finger drag to scroll · Double-tap-and-hold to drag
         </div>
       </div>
 
