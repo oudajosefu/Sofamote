@@ -154,6 +154,7 @@ fn dispatch(cmd: Command) -> Result<(), String> {
         }
         Command::MouseMove { dx, dy } => keystrokes::mouse_move(dx, dy),
         Command::MouseClick { button } => keystrokes::mouse_click(button),
+        Command::MouseButton { button, action } => keystrokes::mouse_button(button, action),
         Command::MouseScroll { dx, dy } => keystrokes::mouse_scroll(dx, dy),
         Command::TypeText { text } => keystrokes::type_text(&text),
     }

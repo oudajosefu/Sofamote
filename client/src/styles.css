@@ -248,11 +248,24 @@ body {
   user-select: none;
   -webkit-user-select: none;
   cursor: crosshair;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+}
+
+.trackpad-hint {
+  color: #52525b;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  pointer-events: none;
+  max-width: 80%;
 }
 
 .trackpad-bar {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1fr;
-  gap: 0.5rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
   padding-bottom: 0.5rem;
 }

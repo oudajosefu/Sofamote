@@ -56,6 +56,13 @@ pub enum MouseButton {
     Middle,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum MouseAction {
+    Press,
+    Release,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ActionName {
@@ -107,6 +114,10 @@ pub enum Command {
     },
     MouseClick {
         button: MouseButton,
+    },
+    MouseButton {
+        button: MouseButton,
+        action: MouseAction,
     },
     MouseScroll {
         dx: f32,

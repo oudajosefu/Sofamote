@@ -42,6 +42,12 @@ export interface MouseClickCommand {
   button: "left" | "right" | "middle";
 }
 
+export interface MouseButtonCommand {
+  type: "mouseButton";
+  button: "left" | "right" | "middle";
+  action: "press" | "release";
+}
+
 export interface MouseScrollCommand {
   type: "mouseScroll";
   dx: number;
@@ -58,6 +64,7 @@ export type Command =
   | KeyCommand
   | MouseMoveCommand
   | MouseClickCommand
+  | MouseButtonCommand
   | MouseScrollCommand
   | TypeTextCommand;
 

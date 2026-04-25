@@ -1,6 +1,6 @@
 use enigo::{Axis, Button, Coordinate, Direction, Enigo, Key, Keyboard, Mouse, Settings};
 
-use crate::types::{KeyName, Modifier, MouseButton};
+use crate::types::{KeyName, Modifier, MouseAction, MouseButton};
 
 fn map_key(k: KeyName) -> Key {
     match k {
@@ -84,13 +84,27 @@ pub fn mouse_move(dx: f32, dy: f32) -> Result<(), String> {
 }
 
 pub fn mouse_click(button: MouseButton) -> Result<(), String> {
-    let btn = match button {
+    let btn = map_button(button);
+    let mut enigo = Enigo::new(&Settings::default()).map_err(|e| e.to_string())?;
+    enigo.button(btn, Direction::Click).map_err(|e| e.to_string())
+}
+
+pub fn mouse_button(button: MouseButton, action: MouseAction) -> Result<(), String> {
+    let btn = map_button(button);
+    let dir = match action {
+        MouseAction::Press => Direction::Press,
+        MouseAction::Release => Direction::Release,
+    };
+    let mut enigo = Enigo::new(&Settings::default()).map_err(|e| e.to_string())?;
+    enigo.button(btn, dir).map_err(|e| e.to_string())
+}
+
+fn map_button(button: MouseButton) -> Button {
+    match button {
         MouseButton::Left => Button::Left,
         MouseButton::Right => Button::Right,
         MouseButton::Middle => Button::Middle,
-    };
-    let mut enigo = Enigo::new(&Settings::default()).map_err(|e| e.to_string())?;
-    enigo.button(btn, Direction::Click).map_err(|e| e.to_string())
+    }
 }
 
 pub fn mouse_scroll(dx: f32, dy: f32) -> Result<(), String> {
