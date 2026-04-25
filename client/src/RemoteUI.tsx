@@ -67,16 +67,6 @@ export function RemoteUI({ state, active, profiles, bindings, send }: Props) {
     [bindings, send, profile]
   );
 
-  let dot = "#ef4444";
-  let label = "offline";
-  if (state === "connecting") {
-    dot = "#facc15";
-    label = "connecting…";
-  } else if (state === "open") {
-    dot = active ? "#4ade80" : "#f59e0b";
-    label = active ? "active" : "paused (tap tray icon)";
-  }
-
   return (
     <div className="remote">
       <header className="bar">
@@ -91,10 +81,6 @@ export function RemoteUI({ state, active, profiles, bindings, send }: Props) {
             </option>
           ))}
         </select>
-        <span className="status">
-          <span className="dot" style={{ background: dot }} />
-          {label}
-        </span>
       </header>
 
       {state === "open" && !active && (

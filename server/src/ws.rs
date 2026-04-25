@@ -104,7 +104,13 @@ async fn handle_command(text: &str, socket: &mut WebSocket, state: &AppState) ->
         }
     };
 
-    if !state.is_active().await {
+    // Mouse and text input commands bypass the is_active gate — they are always intentional
+    let requires_active = matches!(
+        cmd,
+        Command::Key { .. } | Command::Combo { .. } | Command::Action { .. }
+    );
+
+    if requires_active && !state.is_active().await {
         return send_msg(
             socket,
             &ServerMessage::Ack {
@@ -146,6 +152,10 @@ fn dispatch(cmd: Command) -> Result<(), String> {
                 Err("empty recipe".into())
             }
         }
+        Command::MouseMove { dx, dy } => keystrokes::mouse_move(dx, dy),
+        Command::MouseClick { button } => keystrokes::mouse_click(button),
+        Command::MouseScroll { dx, dy } => keystrokes::mouse_scroll(dx, dy),
+        Command::TypeText { text } => keystrokes::type_text(&text),
     }
 }
 

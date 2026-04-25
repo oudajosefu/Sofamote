@@ -21,6 +21,22 @@ pub enum KeyName {
     N,
     Comma,
     Period,
+    Tab,
+    Backspace,
+    Delete,
+    Home,
+    End,
+    PageUp,
+    PageDown,
+    A,
+    D,
+    R,
+    T,
+    V,
+    W,
+    X,
+    Z,
+    F12,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
@@ -29,6 +45,15 @@ pub enum Modifier {
     Shift,
     Ctrl,
     Alt,
+    Win,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum MouseButton {
+    Left,
+    Right,
+    Middle,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
@@ -75,6 +100,20 @@ pub enum Command {
     Action {
         name: ActionName,
         profile: Option<ProfileName>,
+    },
+    MouseMove {
+        dx: f32,
+        dy: f32,
+    },
+    MouseClick {
+        button: MouseButton,
+    },
+    MouseScroll {
+        dx: f32,
+        dy: f32,
+    },
+    TypeText {
+        text: String,
     },
 }
 

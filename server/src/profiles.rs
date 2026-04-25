@@ -119,6 +119,22 @@ fn format_key(key: KeyName) -> String {
         KeyName::N => "N".into(),
         KeyName::Comma => ",".into(),
         KeyName::Period => ".".into(),
+        KeyName::Tab => "Tab".into(),
+        KeyName::Backspace => "⌫".into(),
+        KeyName::Delete => "Del".into(),
+        KeyName::Home => "Home".into(),
+        KeyName::End => "End".into(),
+        KeyName::PageUp => "PgUp".into(),
+        KeyName::PageDown => "PgDn".into(),
+        KeyName::A => "A".into(),
+        KeyName::D => "D".into(),
+        KeyName::R => "R".into(),
+        KeyName::T => "T".into(),
+        KeyName::V => "V".into(),
+        KeyName::W => "W".into(),
+        KeyName::X => "X".into(),
+        KeyName::Z => "Z".into(),
+        KeyName::F12 => "F12".into(),
     }
 }
 
@@ -127,6 +143,7 @@ fn format_modifier(modifier: Modifier) -> &'static str {
         Modifier::Shift => "Shift",
         Modifier::Ctrl => "Ctrl",
         Modifier::Alt => "Alt",
+        Modifier::Win => "Win",
     }
 }
 
