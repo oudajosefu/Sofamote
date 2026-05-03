@@ -8,10 +8,15 @@ import { useSocket } from "./useSocket";
 import { buildWsUrl, rememberToken } from "./pairing";
 import type { InterfaceName } from "./types";
 
-const INTERFACE_OPTIONS: { value: InterfaceName; label: string; ariaName: string }[] = [
-  { value: "media", label: "Media", ariaName: "Media Remote" },
-  { value: "trackpad", label: "Trackpad", ariaName: "Trackpad" },
-  { value: "fullControl", label: "Full", ariaName: "Full Control" },
+const INTERFACE_OPTIONS: {
+  value: InterfaceName;
+  label: string;
+  ariaName: string;
+  iconClass: string;
+}[] = [
+  { value: "media", label: "Media", ariaName: "Media Remote", iconClass: "media" },
+  { value: "trackpad", label: "Trackpad", ariaName: "Trackpad", iconClass: "trackpad" },
+  { value: "fullControl", label: "Full", ariaName: "Full Control", iconClass: "full" },
 ];
 
 export function App() {
@@ -65,11 +70,14 @@ function AppShell() {
               className="mode-switcher-btn"
               aria-label={`Switch to ${option.ariaName} mode`}
               aria-pressed={iface === option.value}
+              data-tooltip={option.ariaName}
               disabled={showSettings}
+              title={option.ariaName}
               onPointerDown={() => setIface(option.value)}
               onClick={() => setIface(option.value)}
             >
-              {option.label}
+              <span className={`mode-icon ${option.iconClass}`} aria-hidden="true" />
+              <span className="mode-label">{option.label}</span>
             </button>
           ))}
         </div>

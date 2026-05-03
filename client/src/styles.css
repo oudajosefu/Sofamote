@@ -52,6 +52,7 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 0.25rem 0;
+  container-type: inline-size;
 }
 
 .mode-switcher {
@@ -72,6 +73,7 @@ body {
 }
 
 .mode-switcher-btn {
+  position: relative;
   height: 2rem;
   min-width: 0;
   background: transparent;
@@ -83,10 +85,38 @@ body {
   font-size: 0.78rem;
   font-weight: 650;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: transform 60ms ease, background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.mode-switcher-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 0.45rem);
+  z-index: 10;
+  background: #f5f5f5;
+  color: #0a0a0a;
+  border-radius: 7px;
+  padding: 0.35rem 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -0.2rem);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.mode-switcher-btn:hover::after,
+.mode-switcher-btn:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .mode-switcher-btn:active:not(:disabled) {
@@ -101,6 +131,94 @@ body {
 
 .mode-switcher-btn:disabled {
   cursor: default;
+}
+
+.mode-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mode-icon {
+  position: relative;
+  display: none;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+.mode-icon.media::before {
+  content: "";
+  position: absolute;
+  left: 0.3rem;
+  top: 0.18rem;
+  border-left: 0.55rem solid currentColor;
+  border-top: 0.34rem solid transparent;
+  border-bottom: 0.34rem solid transparent;
+}
+
+.mode-icon.trackpad {
+  border: 2px solid currentColor;
+  border-radius: 0.25rem;
+}
+
+.mode-icon.trackpad::after {
+  content: "";
+  position: absolute;
+  left: 0.18rem;
+  right: 0.18rem;
+  bottom: 0.28rem;
+  border-top: 2px solid currentColor;
+}
+
+.mode-icon.full::before {
+  content: "";
+  position: absolute;
+  left: 0.15rem;
+  top: 0.15rem;
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 0.06rem;
+  background: currentColor;
+  box-shadow: 0.42rem 0 0 currentColor, 0 0.42rem 0 currentColor, 0.42rem 0.42rem 0 currentColor;
+}
+
+@container (max-width: 24rem) {
+  .mode-switcher {
+    flex-basis: 7.5rem;
+    max-width: 8.75rem;
+  }
+
+  .mode-switcher-btn {
+    padding: 0;
+  }
+
+  .mode-label {
+    display: none;
+  }
+
+  .mode-icon {
+    display: block;
+  }
+}
+
+@media (max-width: 430px) {
+  .mode-switcher {
+    flex-basis: 7.5rem;
+    max-width: 8.75rem;
+  }
+
+  .mode-switcher-btn {
+    padding: 0;
+  }
+
+  .mode-label {
+    display: none;
+  }
+
+  .mode-icon {
+    display: block;
+  }
 }
 
 .profile {
@@ -118,6 +236,7 @@ body {
   gap: 0.5rem;
   color: #a1a1aa;
   font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .dot {
@@ -345,6 +464,7 @@ body {
 .bar-actions {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 0.5rem;
 }
 
