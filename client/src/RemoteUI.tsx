@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ActionBindings, ActionName, Command, ConnectionState, ProfileName } from "./types";
+import { useHaptics } from "./haptics";
 
 interface Props {
   state: ConnectionState;
@@ -44,11 +45,8 @@ const BUTTONS: ButtonSpec[] = [
   }
 ];
 
-function hapticTap(): void {
-  if (typeof navigator.vibrate === "function") navigator.vibrate(15);
-}
-
 export function RemoteUI({ state, active, profiles, bindings, send }: Props) {
+  const haptics = useHaptics();
   const [profile, setProfile] = useState<ProfileName>("auto");
   const profileBindings = bindings[profile] ?? {};
 
@@ -61,10 +59,10 @@ export function RemoteUI({ state, active, profiles, bindings, send }: Props) {
   const fire = useCallback(
     (name: ActionName) => {
       if (!bindings[profile]?.[name]) return;
-      hapticTap();
+      haptics.tap();
       send({ type: "action", name, profile });
     },
-    [bindings, send, profile]
+    [bindings, send, profile, haptics]
   );
 
   return (

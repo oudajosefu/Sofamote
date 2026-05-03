@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { RemoteUI } from "./RemoteUI";
 import { FullControlUI } from "./FullControlUI";
 import { TrackpadUI } from "./TrackpadUI";
+import { SettingsUI } from "./SettingsUI";
+import { SettingsProvider, useSettings } from "./SettingsContext";
 import { useSocket } from "./useSocket";
-import { useInterfaceSelection } from "./useInterfaceSelection";
 import { buildWsUrl, rememberToken } from "./pairing";
 import type { InterfaceName } from "./types";
 
@@ -14,10 +15,20 @@ const INTERFACE_LABELS: Record<InterfaceName, string> = {
 };
 
 export function App() {
+  return (
+    <SettingsProvider>
+      <AppShell />
+    </SettingsProvider>
+  );
+}
+
+function AppShell() {
+  const { settings } = useSettings();
   const token = useMemo(() => rememberToken(), []);
   const url = useMemo(() => (token ? buildWsUrl(token) : null), [token]);
   const { state, active, profiles, bindings, send } = useSocket({ url });
-  const [iface, setIface] = useInterfaceSelection();
+  const [iface, setIface] = useState<InterfaceName>(settings.defaultInterface);
+  const [showSettings, setShowSettings] = useState(false);
 
   if (!token) {
     return (
@@ -45,6 +56,7 @@ export function App() {
           className="profile"
           value={iface}
           onChange={(e) => setIface(e.target.value as InterfaceName)}
+          disabled={showSettings}
         >
           {(Object.keys(INTERFACE_LABELS) as InterfaceName[]).map((name) => (
             <option key={name} value={name}>
@@ -52,26 +64,43 @@ export function App() {
             </option>
           ))}
         </select>
-        <span className="status">
-          <span className="dot" style={{ background: dot }} />
-          {statusLabel}
+        <span className="bar-actions">
+          <span className="status">
+            <span className="dot" style={{ background: dot }} />
+            {statusLabel}
+          </span>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label={showSettings ? "Close settings" : "Open settings"}
+            aria-pressed={showSettings}
+            onClick={() => setShowSettings((v) => !v)}
+          >
+            {showSettings ? "✕" : "⚙"}
+          </button>
         </span>
       </header>
 
-      {iface === "media" && (
-        <RemoteUI
-          state={state}
-          active={active}
-          profiles={profiles}
-          bindings={bindings}
-          send={send}
-        />
-      )}
-      {iface === "fullControl" && (
-        <FullControlUI state={state} active={active} send={send} />
-      )}
-      {iface === "trackpad" && (
-        <TrackpadUI state={state} active={active} send={send} />
+      {showSettings ? (
+        <SettingsUI onClose={() => setShowSettings(false)} />
+      ) : (
+        <>
+          {iface === "media" && (
+            <RemoteUI
+              state={state}
+              active={active}
+              profiles={profiles}
+              bindings={bindings}
+              send={send}
+            />
+          )}
+          {iface === "fullControl" && (
+            <FullControlUI state={state} active={active} send={send} />
+          )}
+          {iface === "trackpad" && (
+            <TrackpadUI state={state} active={active} send={send} />
+          )}
+        </>
       )}
     </div>
   );

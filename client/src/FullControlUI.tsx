@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import type { Command, ConnectionState } from "./types";
+import { useHaptics } from "./haptics";
 
 interface Props {
   send: (cmd: Command) => void;
@@ -16,10 +17,6 @@ interface ControlButton {
 interface Section {
   title: string;
   buttons: ControlButton[];
-}
-
-function hapticTap(): void {
-  if (typeof navigator.vibrate === "function") navigator.vibrate(15);
 }
 
 const SECTIONS: Section[] = [
@@ -85,12 +82,13 @@ const SECTIONS: Section[] = [
 ];
 
 export function FullControlUI({ send, state, active }: Props) {
+  const haptics = useHaptics();
   const fire = useCallback(
     (key: string, mods: string[] = []) => {
-      hapticTap();
+      haptics.tap();
       send({ type: "key", key, mods });
     },
-    [send]
+    [send, haptics]
   );
 
   return (
