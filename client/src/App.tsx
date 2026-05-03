@@ -8,11 +8,11 @@ import { useSocket } from "./useSocket";
 import { buildWsUrl, rememberToken } from "./pairing";
 import type { InterfaceName } from "./types";
 
-const INTERFACE_LABELS: Record<InterfaceName, string> = {
-  media: "Media Remote",
-  fullControl: "Full Control",
-  trackpad: "Trackpad",
-};
+const INTERFACE_OPTIONS: { value: InterfaceName; label: string; ariaName: string }[] = [
+  { value: "media", label: "Media", ariaName: "Media Remote" },
+  { value: "trackpad", label: "Trackpad", ariaName: "Trackpad" },
+  { value: "fullControl", label: "Full", ariaName: "Full Control" },
+];
 
 export function App() {
   return (
@@ -52,18 +52,27 @@ function AppShell() {
   return (
     <div className="app">
       <header className="bar">
-        <select
-          className="profile"
-          value={iface}
-          onChange={(e) => setIface(e.target.value as InterfaceName)}
-          disabled={showSettings}
+        <div
+          className="mode-switcher"
+          role="group"
+          aria-label="Remote mode"
+          aria-disabled={showSettings}
         >
-          {(Object.keys(INTERFACE_LABELS) as InterfaceName[]).map((name) => (
-            <option key={name} value={name}>
-              {INTERFACE_LABELS[name]}
-            </option>
+          {INTERFACE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className="mode-switcher-btn"
+              aria-label={`Switch to ${option.ariaName} mode`}
+              aria-pressed={iface === option.value}
+              disabled={showSettings}
+              onPointerDown={() => setIface(option.value)}
+              onClick={() => setIface(option.value)}
+            >
+              {option.label}
+            </button>
           ))}
-        </select>
+        </div>
         <span className="bar-actions">
           <span className="status">
             <span className="dot" style={{ background: dot }} />

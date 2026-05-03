@@ -50,7 +50,57 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   padding: 0.75rem 0.25rem 0;
+}
+
+.mode-switcher {
+  flex: 1 1 13rem;
+  min-width: 0;
+  max-width: 18rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.15rem;
+  background: #151518;
+  border: 1px solid #2a2a2e;
+  border-radius: 12px;
+  padding: 0.2rem;
+}
+
+.mode-switcher[aria-disabled="true"] {
+  opacity: 0.55;
+}
+
+.mode-switcher-btn {
+  height: 2rem;
+  min-width: 0;
+  background: transparent;
+  color: #a1a1aa;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 0 0.35rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: transform 60ms ease, background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.mode-switcher-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.mode-switcher-btn[aria-pressed="true"] {
+  background: #f5f5f5;
+  color: #0a0a0a;
+  border-color: transparent;
+}
+
+.mode-switcher-btn:disabled {
+  cursor: default;
 }
 
 .profile {
