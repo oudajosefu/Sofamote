@@ -37,7 +37,11 @@ native-dialog = "0.9.6"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
-windows-sys = { version = "0.52", features = ["Win32_UI_WindowsAndMessaging"] }
+windows-sys = { version = "0.52", features = [
+    "Win32_Foundation",
+    "Win32_System_Power",
+    "Win32_UI_WindowsAndMessaging",
+] }
 
 [build-dependencies]
 png = "0.17"

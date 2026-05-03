@@ -8,6 +8,7 @@ mod config;
 mod http;
 mod keystrokes;
 mod net;
+mod power;
 mod profiles;
 mod single_instance;
 mod state;
@@ -15,7 +16,9 @@ mod tray;
 mod types;
 mod ws;
 
-use std::sync::{mpsc, Arc};
+use std::future::IntoFuture;
+use std::net::Ipv4Addr;
+use std::sync::{mpsc, Arc, RwLock};
 use std::time::Duration;
 
 use single_instance::ClaimResult;
@@ -54,11 +57,16 @@ fn main() {
     };
 
     let cfg = config::load_or_create();
+    let token = cfg.token.clone();
     let lan_ip = net::get_lan_ip();
-    let pairing_url = format!("http://{}:{}/?t={}", lan_ip, PORT, cfg.token);
+    let pairing_url = Arc::new(RwLock::new(format!(
+        "http://{}:{}/?t={}",
+        lan_ip, PORT, token
+    )));
 
     if PRINT_PAIRING_QR {
-        print_qr(&pairing_url);
+        let url = pairing_url.read().expect("pairing_url lock poisoned").clone();
+        print_qr(&url);
     }
 
     let app_state = AppState::new(cfg.clone());
@@ -72,9 +80,16 @@ fn main() {
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
     let (startup_tx, startup_rx) = mpsc::channel::<StartupSignal>();
 
+    // Resume notification: Win32 callback (system-managed thread) → tokio task.
+    let (resume_tx, resume_rx) = tokio::sync::mpsc::unbounded_channel::<()>();
+    // Registration handle must outlive the runtime so the OS can keep calling
+    // back into us; held on the main thread, dropped at end of main().
+    let _resume_registration = power::register_resume_notifier(resume_tx);
+
     // Start tokio runtime on a background thread
     let state_bg = Arc::clone(&app_state);
-    let pairing_url_bg = pairing_url.clone();
+    let pairing_url_bg = Arc::clone(&pairing_url);
+    let token_bg = token.clone();
     let server_thread = std::thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
         rt.block_on(async move {
@@ -82,9 +97,11 @@ fn main() {
                 state_bg,
                 tray_rx,
                 pairing_url_bg,
+                token_bg,
                 listener,
                 shutdown_rx,
                 startup_tx,
+                resume_rx,
             )
             .await;
         });
@@ -94,8 +111,9 @@ fn main() {
     autolaunch::set_auto_launch(cfg.auto_launch).ok();
 
     // Build system tray on the main thread (required by OS message pump)
-    let (tray_handle, menu_ids) = tray::build_tray(&pairing_url, cfg.is_active, cfg.auto_launch)
-        .expect("failed to create system tray");
+    let (tray_handle, menu_ids) =
+        tray::build_tray(Arc::clone(&pairing_url), cfg.is_active, cfg.auto_launch)
+            .expect("failed to create system tray");
 
     // Track local state for sync main-thread use
     let mut active = cfg.is_active;
@@ -103,10 +121,16 @@ fn main() {
     let mut state_rx = app_state.subscribe();
     let mut pairing_qr_pending = should_open_pairing_qr;
 
-    let qr_url = format!(
-        "{}qr.png",
-        pairing_url.split('?').next().unwrap_or(&pairing_url)
-    );
+    // Closure that always reads the latest pairing URL when opening the QR.
+    let pairing_url_for_qr = Arc::clone(&pairing_url);
+    let current_qr_url = move || -> String {
+        let url = pairing_url_for_qr
+            .read()
+            .expect("pairing_url lock poisoned")
+            .clone();
+        let base = url.split('?').next().unwrap_or(&url);
+        format!("{}qr.png", base)
+    };
 
     // Main thread event loop.
     //
@@ -118,7 +142,7 @@ fn main() {
             match startup_rx.try_recv() {
                 Ok(StartupSignal::Ready) => {
                     pairing_qr_pending = false;
-                    if open::that(&qr_url).is_ok() {
+                    if open::that(&current_qr_url()).is_ok() {
                         app_state.mark_pairing_qr_shown();
                     }
                 }
@@ -131,9 +155,15 @@ fn main() {
 
         // Apply state broadcasts from async tasks
         while let Ok(event) = state_rx.try_recv() {
-            let StateEvent::ActiveChanged(v) = event;
-            active = v;
-            tray_handle.set_active(active);
+            match event {
+                StateEvent::ActiveChanged(v) => {
+                    active = v;
+                    tray_handle.set_active(active);
+                }
+                StateEvent::PairingUrlRefreshed => {
+                    tray_handle.refresh_pairing_url();
+                }
+            }
         }
 
         // Process tray menu clicks
@@ -146,7 +176,7 @@ fn main() {
                 tray_handle.set_auto_launch(auto_launch_state);
                 tray_tx.send(TrayCmd::SetAutoLaunch(auto_launch_state)).ok();
             } else if event.id == menu_ids.show_qr {
-                open::that(&qr_url).ok();
+                open::that(&current_qr_url()).ok();
             } else if event.id == menu_ids.quit {
                 return false; // exit loop
             }
@@ -164,15 +194,20 @@ fn main() {
         std::process::exit(0);
     });
     server_thread.join().ok();
+    // _resume_registration drops here, which unregisters the Win32 callback
+    // and releases the boxed sender (causing the resume task to exit cleanly).
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn run_server(
     state: Arc<AppState>,
     mut tray_rx: tokio::sync::mpsc::UnboundedReceiver<TrayCmd>,
-    pairing_url: String,
-    listener: std::net::TcpListener,
-    shutdown_rx: tokio::sync::oneshot::Receiver<()>,
+    pairing_url: Arc<RwLock<String>>,
+    token: String,
+    initial_listener: std::net::TcpListener,
+    mut shutdown_rx: tokio::sync::oneshot::Receiver<()>,
     startup_tx: mpsc::Sender<StartupSignal>,
+    mut resume_rx: tokio::sync::mpsc::UnboundedReceiver<()>,
 ) {
     // Task: apply tray commands to app state
     let state_for_cmds = Arc::clone(&state);
@@ -190,8 +225,35 @@ async fn run_server(
         }
     });
 
-    let router = http::build_router(state, pairing_url.clone());
-    let listener = match tokio::net::TcpListener::from_std(listener) {
+    // Task: refresh pairing URL on system resume from sleep/hibernation.
+    // The previously-shown LAN IP is preferred when it's still bound to any
+    // interface, so the phone's cached pairing URL keeps working without a re-scan.
+    let pairing_url_for_resume = Arc::clone(&pairing_url);
+    let state_for_resume = Arc::clone(&state);
+    let token_for_resume = token.clone();
+    tokio::spawn(async move {
+        while resume_rx.recv().await.is_some() {
+            // Coalesce notification bursts (PBT_APMRESUMESUSPEND + PBT_APMRESUMEAUTOMATIC).
+            while resume_rx.try_recv().is_ok() {}
+
+            tracing::info!("system resume detected; refreshing pairing URL");
+            // Give the OS a moment to bring the network back up.
+            tokio::time::sleep(Duration::from_millis(750)).await;
+
+            if refresh_pairing_url(&pairing_url_for_resume, &token_for_resume) {
+                let url = pairing_url_for_resume
+                    .read()
+                    .expect("pairing_url lock poisoned")
+                    .clone();
+                tracing::info!("pairing URL changed -> {}", url);
+            }
+            state_for_resume.tx.send(StateEvent::PairingUrlRefreshed).ok();
+        }
+    });
+
+    let router = http::build_router(state, Arc::clone(&pairing_url));
+
+    let mut listener = match tokio::net::TcpListener::from_std(initial_listener) {
         Ok(l) => l,
         Err(e) => {
             startup_tx.send(StartupSignal::Failed).ok();
@@ -203,14 +265,80 @@ async fn run_server(
     startup_tx.send(StartupSignal::Ready).ok();
     tracing::info!("Listening on port {PORT}");
 
-    tokio::select! {
-        res = axum::serve(listener, router) => {
-            if let Err(e) = res { tracing::error!("server error: {e}"); }
+    // Supervisor loop: if axum::serve ever returns (shouldn't normally happen,
+    // but defends against catastrophic listener failure after sleep/resume),
+    // log and rebind on 0.0.0.0:PORT with exponential backoff.
+    let mut backoff_secs: u64 = 1;
+    loop {
+        let serve_fut = axum::serve(listener, router.clone()).into_future();
+        tokio::pin!(serve_fut);
+
+        tokio::select! {
+            biased;
+            _ = &mut shutdown_rx => {
+                tracing::info!("shutting down");
+                return;
+            }
+            res = &mut serve_fut => {
+                match res {
+                    Ok(()) => tracing::warn!("axum::serve completed; rebinding in {backoff_secs}s"),
+                    Err(e) => tracing::error!("axum::serve exited: {e}; rebinding in {backoff_secs}s"),
+                }
+            }
         }
-        _ = shutdown_rx => {
-            tracing::info!("shutting down");
+
+        // Backoff before rebind, but honor shutdown
+        tokio::select! {
+            biased;
+            _ = &mut shutdown_rx => return,
+            _ = tokio::time::sleep(Duration::from_secs(backoff_secs)) => {}
         }
+
+        // Try to rebind the listener (cap backoff at 30s per attempt)
+        listener = loop {
+            match tokio::net::TcpListener::bind((Ipv4Addr::UNSPECIFIED, PORT)).await {
+                Ok(l) => break l,
+                Err(e) => {
+                    tracing::error!(
+                        "rebind on port {PORT} failed: {e}; retrying in {backoff_secs}s"
+                    );
+                    tokio::select! {
+                        biased;
+                        _ = &mut shutdown_rx => return,
+                        _ = tokio::time::sleep(Duration::from_secs(backoff_secs)) => {}
+                    }
+                    backoff_secs = (backoff_secs * 2).min(30);
+                }
+            }
+        };
+        backoff_secs = 1;
+        tracing::info!("rebound listener on port {PORT}");
     }
+}
+
+/// Re-detects the LAN IP and rewrites the shared pairing URL if it changed.
+/// Sticky: keeps the previously-shown IP whenever it is still bound to any
+/// live interface, so the phone's cached URL keeps working across network changes.
+fn refresh_pairing_url(pairing_url: &Arc<RwLock<String>>, token: &str) -> bool {
+    let current = pairing_url
+        .read()
+        .expect("pairing_url lock poisoned")
+        .clone();
+    let previous_ip = extract_ip_from_pairing_url(&current);
+    let new_ip = net::pick_lan_ip(previous_ip);
+    let new_url = format!("http://{}:{}/?t={}", new_ip, PORT, token);
+    if new_url == current {
+        return false;
+    }
+    *pairing_url.write().expect("pairing_url lock poisoned") = new_url;
+    true
+}
+
+fn extract_ip_from_pairing_url(url: &str) -> Option<std::net::IpAddr> {
+    let after_scheme = url.strip_prefix("http://")?;
+    let host_port = after_scheme.split('/').next()?;
+    let ip_str = host_port.split(':').next()?;
+    ip_str.parse().ok()
 }
 
 // On Windows: run a proper Win32 message pump so tray-icon's hidden HWND receives

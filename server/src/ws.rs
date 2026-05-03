@@ -85,6 +85,7 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
                             break;
                         }
                     }
+                    Ok(StateEvent::PairingUrlRefreshed) => {} // tray-only concern
                     Err(broadcast::error::RecvError::Lagged(_)) => {} // continue
                     Err(broadcast::error::RecvError::Closed) => break,
                 }

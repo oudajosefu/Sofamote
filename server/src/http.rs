@@ -1,5 +1,5 @@
 use std::io::Cursor;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use axum::extract::{FromRef, State};
 use axum::http::{header, HeaderMap, StatusCode, Uri};
@@ -33,13 +33,16 @@ impl FromRef<RouterState> for Arc<AppState> {
     }
 }
 
-pub fn build_router(app: Arc<AppState>, pairing_url: String) -> Router {
+pub fn build_router(app: Arc<AppState>, pairing_url: Arc<RwLock<String>>) -> Router {
     let state = RouterState { app };
 
     Router::new()
         .route("/", get(ws_handler))
         .route(INSTANCE_PROBE_PATH, get(instance_probe_handler))
-        .route("/qr.png", get(move |s| qr_handler(s, pairing_url.clone())))
+        .route(
+            "/qr.png",
+            get(move |s| qr_handler(s, Arc::clone(&pairing_url))),
+        )
         .fallback(static_handler)
         .with_state(state)
 }
@@ -89,8 +92,12 @@ fn instance_probe_response() -> Response {
     (StatusCode::NO_CONTENT, headers).into_response()
 }
 
-async fn qr_handler(State(_): State<Arc<AppState>>, pairing_url: String) -> impl IntoResponse {
-    match generate_qr_png(&pairing_url) {
+async fn qr_handler(
+    State(_): State<Arc<AppState>>,
+    pairing_url: Arc<RwLock<String>>,
+) -> impl IntoResponse {
+    let url = pairing_url.read().expect("pairing_url lock poisoned").clone();
+    match generate_qr_png(&url) {
         Ok(bytes) => {
             let mut headers = HeaderMap::new();
             headers.insert(header::CONTENT_TYPE, "image/png".parse().unwrap());

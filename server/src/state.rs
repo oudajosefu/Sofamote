@@ -6,6 +6,7 @@ use crate::config::{self, PersistedConfig};
 #[derive(Debug, Clone)]
 pub enum StateEvent {
     ActiveChanged(bool),
+    PairingUrlRefreshed,
 }
 
 struct Inner {

@@ -1,3 +1,6 @@
+use std::cell::Cell;
+use std::sync::{Arc, RwLock};
+
 use muda::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem};
 use tray_icon::{TrayIcon, TrayIconBuilder};
 
@@ -13,22 +16,39 @@ pub struct TrayHandle {
     _icon: TrayIcon,
     active_item: CheckMenuItem,
     autolaunch_item: CheckMenuItem,
-    pairing_url: String,
+    pairing_url: Arc<RwLock<String>>,
+    active: Cell<bool>,
 }
 
 impl TrayHandle {
     pub fn set_active(&self, active: bool) {
+        self.active.set(active);
         self.active_item.set_checked(active);
         if let Ok(icon) = load_icon(active) {
             self._icon.set_icon(Some(icon)).ok();
         }
-        self._icon
-            .set_tooltip(Some(tooltip(active, &self.pairing_url)))
-            .ok();
+        self.refresh_tooltip();
     }
 
     pub fn set_auto_launch(&self, enabled: bool) {
         self.autolaunch_item.set_checked(enabled);
+    }
+
+    /// Re-reads the current pairing URL from the shared lock and updates the
+    /// tray tooltip. Call this after the LAN IP refreshes.
+    pub fn refresh_pairing_url(&self) {
+        self.refresh_tooltip();
+    }
+
+    fn refresh_tooltip(&self) {
+        let url = self
+            .pairing_url
+            .read()
+            .expect("pairing_url lock poisoned")
+            .clone();
+        self._icon
+            .set_tooltip(Some(tooltip(self.active.get(), &url)))
+            .ok();
     }
 }
 
@@ -40,7 +60,7 @@ pub struct MenuIds {
 }
 
 pub fn build_tray(
-    pairing_url: &str,
+    pairing_url: Arc<RwLock<String>>,
     initial_active: bool,
     initial_autolaunch: bool,
 ) -> Result<(TrayHandle, MenuIds), Box<dyn std::error::Error>> {
@@ -68,17 +88,25 @@ pub fn build_tray(
     ])?;
 
     let icon = load_icon(initial_active)?;
+    let initial_tooltip = {
+        let url = pairing_url
+            .read()
+            .expect("pairing_url lock poisoned")
+            .clone();
+        tooltip(initial_active, &url)
+    };
     let tray = TrayIconBuilder::new()
         .with_menu(Box::new(menu))
         .with_icon(icon)
-        .with_tooltip(tooltip(initial_active, pairing_url))
+        .with_tooltip(initial_tooltip)
         .build()?;
 
     let handle = TrayHandle {
         _icon: tray,
         active_item,
         autolaunch_item,
-        pairing_url: pairing_url.to_string(),
+        pairing_url,
+        active: Cell::new(initial_active),
     };
 
     Ok((handle, ids))
