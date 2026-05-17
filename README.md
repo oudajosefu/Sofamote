@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/github/license/oudajosefu/sofamote?style=flat-square)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/oudajosefu/sofamote?style=flat-square)](https://github.com/oudajosefu/sofamote/releases/latest)
-[![Release workflow](https://img.shields.io/github/actions/workflow/status/oudajosefu/sofamote/release.yml?style=flat-square)](https://github.com/oudajosefu/sofamote/actions/workflows/release.yml)
+[![Build](https://img.shields.io/github/actions/workflow/status/oudajosefu/sofamote/ci.yml?branch=main&style=flat-square&label=build)](https://github.com/oudajosefu/sofamote/actions/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey?style=flat-square)](#-install)
 
 <br />
