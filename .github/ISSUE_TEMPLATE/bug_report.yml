@@ -1,0 +1,65 @@
+name: Bug report
+description: Report something that is not working as expected.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Sofamote. Please include enough detail for someone else to reproduce the problem.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Sofamote version
+      placeholder: "v0.8.0, latest release, or commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and streaming site
+      placeholder: "Chrome on YouTube, Firefox on Netflix, etc."
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Launch Sofamote...
+        2. Scan the QR...
+        3. Tap Play/Pause...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Add logs, screenshots, or screen recordings if useful.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues first.
+          required: true
+        - label: I am using the latest Sofamote release or current `main`.
+          required: true
+

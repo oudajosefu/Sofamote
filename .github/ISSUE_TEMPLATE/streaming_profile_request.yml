@@ -1,0 +1,48 @@
+name: Streaming profile request
+description: Request or contribute verified shortcuts for a streaming site.
+title: "[Profile]: "
+labels:
+  - enhancement
+  - "area: profiles"
+body:
+  - type: input
+    id: service
+    attributes:
+      label: Streaming site
+      placeholder: "Amazon Prime Video, Hulu, Disney+, etc."
+    validations:
+      required: true
+  - type: textarea
+    id: shortcuts
+    attributes:
+      label: Verified shortcuts
+      description: List each Sofamote action and the shortcut that works in a focused browser player.
+      placeholder: |
+        Play/Pause: space
+        Seek back 10s: left arrow
+        Seek forward 10s: right arrow
+        Fullscreen: f
+    validations:
+      required: true
+  - type: input
+    id: browser-os
+    attributes:
+      label: Browser and OS tested
+      placeholder: "Chrome on Windows 11, Safari on macOS, etc."
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Mention account/player state, focused element requirements, captions, next episode, speed controls, or unsupported actions.
+  - type: checkboxes
+    id: contribution-checklist
+    attributes:
+      label: Contribution checklist
+      options:
+        - label: Shortcuts were verified in a focused browser player.
+          required: true
+        - label: A profile PR should update `server/src/types.rs`, `client/src/types.ts`, `server/src/profiles.rs`, binding tests, and the README controls table when behavior changes.
+          required: true
+

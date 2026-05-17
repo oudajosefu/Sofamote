@@ -1,0 +1,40 @@
+name: Documentation improvement
+description: Suggest a README, troubleshooting, install, or contributor-doc improvement.
+title: "[Docs]: "
+labels:
+  - documentation
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Documentation area
+      options:
+        - Install instructions
+        - Pairing or firewall troubleshooting
+        - Add to Home Screen
+        - Streaming profiles
+        - Contributor docs
+        - Security or release trust
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is confusing or missing?
+      description: Describe the current gap.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      description: Share wording, screenshots, steps, or examples if you have them.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues first.
+          required: true
+

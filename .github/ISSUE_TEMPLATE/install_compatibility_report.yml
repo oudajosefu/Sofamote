@@ -1,0 +1,70 @@
+name: Install or compatibility report
+description: Share whether Sofamote installs and runs correctly on your system.
+title: "[Install]: "
+labels:
+  - "needs: testing"
+  - "area: installer"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Install reports are especially helpful for macOS, Linux, firewall prompts, tray/menu behavior, and first-run pairing.
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Ubuntu/Debian Linux
+        - Other Linux
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version
+      placeholder: "Windows 11 24H2, macOS 15, Ubuntu 24.04, etc."
+    validations:
+      required: true
+  - type: dropdown
+    id: artifact
+    attributes:
+      label: Install artifact
+      options:
+        - Windows MSI
+        - Windows portable EXE
+        - macOS DMG
+        - Linux DEB
+        - Built from source
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: What worked?
+      description: Include install, launch, tray/menu, QR pairing, phone connection, and playback control results.
+    validations:
+      required: true
+  - type: textarea
+    id: problems
+    attributes:
+      label: What failed or felt confusing?
+      description: Include warnings, firewall prompts, Gatekeeper messages, missing dependencies, or pairing trouble.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Extra environment details
+      placeholder: "Browser, phone OS, streaming site tested, network type, lid-closed setup, etc."
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I tried the latest release or current `main`.
+          required: true
+        - label: I included my OS version and install artifact.
+          required: true
+

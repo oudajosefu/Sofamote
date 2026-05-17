@@ -154,6 +154,15 @@ Sofamote generates a 128-bit random token on first launch and persists it to `%A
 
 To reset pairing (e.g. your phone was lost), delete the config file and restart the server. All previously paired devices stop working.
 
+## 🤝 Contributing
+
+Sofamote is especially looking for platform testers, streaming-site profile contributors, and docs improvements around pairing, firewall prompts, and Add to Home Screen behavior.
+
+- Read the [contributing guide](CONTRIBUTING.md) for setup, code style, profile changes, and PR expectations.
+- Browse [`good first issue`](https://github.com/oudajosefu/sofamote/labels/good%20first%20issue) and [`help wanted`](https://github.com/oudajosefu/sofamote/labels/help%20wanted) issues.
+- If you try a release on macOS, Linux, or a new Windows setup, please open an [install/compatibility report](https://github.com/oudajosefu/sofamote/issues/new?template=install_compatibility_report.yml).
+- Report security-sensitive issues privately using the [security policy](SECURITY.md).
+
 ---
 
 <details>
