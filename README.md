@@ -38,7 +38,7 @@ Laptop closed, HDMI to the TV, comfy on the sofa — and the only way to pause i
 - 🔒 **LAN-only, no cloud** — your phone talks to your laptop over your own WiFi. No accounts, no telemetry, no third-party server.
 - 📱 **Installs like a real app** — the phone client is a PWA. Pair once via QR, add to home screen, and it launches in one tap.
 - 🟢 **Tray arm/disarm** — flip a tray toggle to stop forwarding keystrokes (so stray taps don't pause your movie mid-scene) without disconnecting the phone.
-- 🪟 **Signed, cross-platform installers** — Windows `.msi`/`.exe`, macOS `.dmg`, Linux `.deb`, built and signed by GitHub Actions on every release.
+- 🪟 **Cross-platform installers** — Windows `.msi`/`.exe`, macOS `.dmg`, Linux `.deb`, built by GitHub Actions on every release, with signing support wired up for future releases.
 
 </td>
 <td valign="top" width="40%" align="center">
@@ -54,6 +54,8 @@ Laptop closed, HDMI to the TV, comfy on the sofa — and the only way to pause i
 Download the asset for your OS from the [latest release](https://github.com/oudajosefu/sofamote/releases/latest).
 
 > **macOS/Linux testing note:** macOS and Linux release artifacts are built by CI, but have not yet been personally tested by the maintainer. If you try one, you are very welcome to open an issue or PR with your OS/version and how the install/run experience went.
+>
+> **Signing note:** Windows and macOS releases are not signed/notarized yet. The release workflow is set up to support signing in the future once the required certificates and credentials are configured.
 
 ### Windows
 
@@ -71,7 +73,7 @@ Download the asset for your OS from the [latest release](https://github.com/ouda
 2. Launch Sofamote from Applications.
 3. Scan the QR code from the menu bar → **Show pairing QR…** (or the browser tab it opens on first launch).
 
-Notarized DMGs from GitHub Actions avoid the Gatekeeper "unidentified developer" warning.
+Current DMGs are not notarized yet, so macOS may show Gatekeeper warnings. The release workflow is prepared for notarization once signing credentials are configured.
 
 ### Linux
 
@@ -230,7 +232,7 @@ client/   Vite + React PWA. Served from the laptop, installs to phone.
 
 The repo is licensed under the MIT License. The root [LICENSE](LICENSE) file is the canonical license text, and the Windows MSI displays the same MIT terms during installation.
 
-When GitHub Actions release credentials are configured, Windows release builds sign both `sofamote.exe` and the generated MSI. That improves the publisher/trust experience, but brand-new releases can still need time to build Microsoft SmartScreen reputation.
+Current Windows and macOS releases are not signed/notarized yet. The GitHub Actions release workflow is set up to sign Windows `sofamote.exe`/MSI artifacts and notarize macOS DMGs once the required credentials are configured. That will improve the publisher/trust experience, though brand-new Windows releases can still need time to build Microsoft SmartScreen reputation.
 
 ### Cutting a new version
 
