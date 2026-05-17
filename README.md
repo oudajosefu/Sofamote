@@ -53,6 +53,8 @@ Laptop closed, HDMI to the TV, comfy on the sofa — and the only way to pause i
 
 Download the asset for your OS from the [latest release](https://github.com/oudajosefu/sofamote/releases/latest).
 
+> **macOS/Linux testing note:** macOS and Linux release artifacts are built by CI, but have not yet been personally tested by the maintainer. If you try one, you are very welcome to open an issue or PR with your OS/version and how the install/run experience went.
+
 ### Windows
 
 1. Run the `.msi` installer (or the portable `sofamote.exe` if you'd rather not install).
