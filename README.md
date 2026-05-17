@@ -77,7 +77,11 @@ Current DMGs are not notarized yet, so macOS may show Gatekeeper warnings. The r
 
 ### Linux
 
+1. Download the latest `.deb` release artifact from the [releases page](https://github.com/oudajosefu/sofamote/releases/latest).
+2. In a terminal, go to the directory where the `.deb` was downloaded and install it:
+
 ```bash
+cd ~/Downloads
 sudo apt install ./sofamote_*.deb
 sofamote
 ```
