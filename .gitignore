@@ -7,3 +7,8 @@ dist/
 config.json
 
 server/target/
+
+# Local README screenshot render harness
+client/screenshot.html
+client/src/readmeScreenshots.css
+client/src/readmeScreenshots.tsx
