@@ -9,8 +9,10 @@ permissions:
   contents: write
   id-token: write
 
+# Run jobs only for Joseph's own events and re-runs.
 jobs:
   build:
+    if: ${{ github.actor == 'oudajosefu' && github.triggering_actor == 'oudajosefu' }}
     name: Build ${{ matrix.os }}
     runs-on: ${{ matrix.runner }}
     # Windows signing contract:
@@ -295,6 +297,7 @@ jobs:
           path: server/target/debian/*.deb
 
   release:
+    if: ${{ github.actor == 'oudajosefu' && github.triggering_actor == 'oudajosefu' }}
     name: Create GitHub Release
     needs: build
     runs-on: ubuntu-latest

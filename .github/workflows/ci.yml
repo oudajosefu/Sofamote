@@ -24,8 +24,14 @@ name: CI
 permissions:
   contents: read
 
+# Run jobs only for Joseph's own events and re-runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.actor }}-${{ github.triggering_actor }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    if: ${{ github.actor == 'oudajosefu' && github.triggering_actor == 'oudajosefu' }}
     name: Build ${{ matrix.os }}
     runs-on: ${{ matrix.runner }}
 
